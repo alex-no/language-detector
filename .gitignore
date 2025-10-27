@@ -1,0 +1,29 @@
+# Composer
+/vendor/
+composer.lock
+
+# PHPUnit
+.phpunit.result.cache
+coverage.xml
+coverage/
+
+# Logs and temp
+*.log
+/tmp/
+/.cache/
+
+# IDE and OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Build / dist
+/build/
+/dist/
+/docs/build/
+
+# Node (for tools)
+node_modules/
+package-lock.json
+yarn.lock

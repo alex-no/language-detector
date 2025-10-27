@@ -1,0 +1,25 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php: [ '8.0', '8.1', '8.2' ]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: mbstring, pdo, pdo_mysql
+      - name: Install dependencies
+        run: composer install --no-progress --no-suggest --prefer-dist
+      - name: Run phpunit
+        run: ./vendor/bin/phpunit --configuration phpunit.xml.dist -v
