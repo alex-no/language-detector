@@ -9,7 +9,8 @@
   },
   "autoload": {
     "psr-4": {
-      "LanguageDetector\\": "src/"
+      "LanguageDetector\\": "src/",
+      "LanguageDetector\\Adapters\\": "adapters/"
     }
   },
   "require-dev": {
