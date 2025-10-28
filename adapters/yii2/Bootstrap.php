@@ -1,25 +1,57 @@
 <?php
-use \yii\base\BootstrapInterface;
+namespace LanguageDetector\Adapters\Yii2;
 
+use Yii;
+use yii\base\BootstrapInterface;
+use LanguageDetector\Core\LanguageDetector;
+
+/**
+ * Yii2 bootstrap adapter — creates the detector core and installs Yii::$app->language
+ */
 class Bootstrap implements BootstrapInterface
 {
-    public function bootstrap($app)
+    public array $config = [];
+
+    public function __construct(array $config = [])
     {
+        $this->config = $config;
+    }
+
+    /**
+     * @param \yii\base\Application $app
+     */
+    public function bootstrap($app): void
+    {
+        // We create adapters that wrap Yii components.
         $requestAdapter = new YiiRequestAdapter($app->request);
         $responseAdapter = new YiiResponseAdapter($app->response);
-        $userAdapter = $app->user->isGuest ? null : new YiiUserAdapter($app->user->identity);
-        $repo = new YiiLanguageRepository($app->db, 'language', 'code', 'is_enabled', 'order');
+        $userAdapter = ($app->has('user') && !$app->user->isGuest && $app->user->identity)
+            ? new YiiUserAdapter($app->user->identity)
+            : null;
+        $repo = new YiiLanguageRepository($app->db, $this->config['tableName'] ?? 'language', $this->config['codeField'] ?? 'code', $this->config['enabledField'] ?? 'is_enabled', $this->config['orderField'] ?? 'order');
         $cache = new YiiCacheAdapter($app->cache);
 
-        $detector = new \LanguageDetector\Core\LanguageDetector(
-            $requestAdapter, $responseAdapter, $userAdapter, $repo, $cache, [
+        $detector = new LanguageDetector(
+            $requestAdapter,
+            $responseAdapter,
+            $userAdapter,
+            $repo,
+            $cache,
+            array_merge([
                 'paramName' => 'lang',
                 'default' => 'en',
                 'userAttribute' => 'language_code',
-            ]
+            ], $this->config)
         );
 
-        $lang = $detector->detect(false);
-        Yii::$app->language = $lang;
+        try {
+            $lang = $detector->detect(false);
+            if (!empty($lang)) {
+                Yii::$app->language = $lang;
+            }
+        } catch (\Throwable $e) {
+            Yii::error('LanguageDetector bootstrap error: ' . $e->getMessage(), __METHOD__);
+            // Don't throw the exception any further—the app should still work.
+        }
     }
 }
