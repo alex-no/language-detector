@@ -8,6 +8,7 @@ with adapters for **Yii 2** and **Laravel**.
 ## ✨ Features
 - Detects language from multiple sources:
   - `POST` / `GET` parameters
+  - 'Path' - URL path request
   - Authenticated user profile
   - Session / Cookies
   - `Accept-Language` header
@@ -28,25 +29,9 @@ composer require alex-no/language-detector
 
 ---
 
-## 🧩 Basic Usage
-
-You can use the LanguageDetector class directly in any PHP application:
-
-```php
-use LanguageDetector\LanguageDetector;
-
-$detector = new LanguageDetector([
-    'paramName' => 'lang',
-    'default' => 'en',
-]);
-
-$lang = $detector->detect();
-echo "Detected language: {$lang}";
-```
-
 ## 🚀 Usage in Yii 2
 
-Register the component in config/web.php:
+Register the "component" and the "bootstrap" in config/web.php:
 
 ```php
 'bootstrap' => [
@@ -61,6 +46,7 @@ Register the component in config/web.php:
         'tableName' => 'language',
         'codeField' => 'code',
         'enabledField' => 'is_enabled',
+        'pathSegmentIndex' => 1,
     ],
 ],
 ```
@@ -136,15 +122,16 @@ How it works
 
 ## ⚙️ Configuration Options
 
-| Option          | Description                                 | Default         |
-| --------------- | ------------------------------------------- | --------------- |
-| `paramName`     | Request parameter name for language         | `lang`          |
-| `default`       | Fallback language code                      | `en`            |
-| `userAttribute` | User model attribute used to store language | `language_code` |
-| `tableName`     | Database table name containing languages    | `language`      |
-| `codeField`     | Field name containing language code         | `code`          |
-| `enabledField`  | Field name for active/enabled flag          | `is_enabled`    |
-| `orderField`    | Field used for sorting languages            | `order`         |
+| Option             | Description                                      | Default         |
+| ------------------ | ------------------------------------------------ | --------------- |
+| `paramName`        | Request parameter name for language              | `lang`          |
+| `default`          | Fallback language code                           | `en`            |
+| `userAttribute`    | User model attribute used to store language      | `language_code` |
+| `tableName`        | Database table name containing languages         | `language`      |
+| `codeField`        | Field name containing language code              | `code`          |
+| `enabledField`     | Field name for active/enabled flag               | `is_enabled`    |
+| `orderField`       | Field used for sorting languages                 | `order`         |
+| `pathSegmentIndex` | Segment Index of Url Path if get language by URL | 0               |
 
 ## 🗃️ Example Language Table
 
@@ -200,10 +187,22 @@ composer test
 
 ```css
 src/
-├── LanguageDetector.php
+├── Core/
+│   ├── LanguageDetector.php
+│   ├── Contracts/
+│   │   ├── AuthenticatorInterface.php
+│   │   ├── LanguageRepositoryInterface.php
+│   │   ├── RequestInterface.php
+│   │   ├── ResponseInterface.php
+│   │   ├── UserInterface.php
 ├── Adapters/
 │   ├── Yii2/
 │   │   ├── Bootstrap.php
+│   │   ├── YiiCacheAdapter.php
+│   │   ├── YiiLanguageRepository.php
+│   │   ├── YiiRequestAdapter.php
+│   │   ├── YiiResponseAdapter.php
+│   │   ├── YiiUserAdapter.php
 │   └── Laravel/
 │       ├── LanguageServiceProvider.php
 │       ├──
