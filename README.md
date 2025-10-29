@@ -71,7 +71,7 @@ Add this line to the providers array in config/app.php
 
 ```php
 'providers' => [
-    LanguageDetector\Adapters\Laravel\LanguageServiceProvider::class,
+    LanguageDetector\Adapters\Laravel\LaravelServiceProvider::class,
 ],
 ```
 
@@ -83,7 +83,7 @@ Add to app/Http/Kernel.php:
 protected $middlewareGroups = [
     'web' => [
         // ...
-        \LanguageDetector\Adapters\Laravel\LanguageMiddleware::class,
+        \LanguageDetector\Adapters\Laravel\LaravelMiddleware::class,
     ],
 ];
 ```
@@ -158,25 +158,23 @@ VALUES
 
 ## 🧪 Running Tests
 
-Make sure PHPUnit is installed (via Composer):
+Install PHPUnit as a dev dependency:
 
 ```bash
-composer require alex-no/language-detector
+composer require --dev phpunit/phpunit
 ```
-
-or manually run PHPUnit:
-
+Run the test suite:
 ```bash
 ./vendor/bin/phpunit -c phpunit.xml.dist
 ```
 
 Or define a shortcut in composer.json:
-
 ```json
 "scripts": {
     "test": "phpunit -c phpunit.xml.dist"
 }
 ```
+
 Then simply run:
 ```bash
 composer test
@@ -190,11 +188,12 @@ src/
 ├── Core/
 │   ├── LanguageDetector.php
 │   ├── Contracts/
-│   │   ├── AuthenticatorInterface.php
 │   │   ├── LanguageRepositoryInterface.php
 │   │   ├── RequestInterface.php
 │   │   ├── ResponseInterface.php
 │   │   ├── UserInterface.php
+│   │   ├── AuthenticatorInterface.php
+│   ├── Extractor.php
 ├── Adapters/
 │   ├── Yii2/
 │   │   ├── Bootstrap.php
@@ -205,10 +204,16 @@ src/
 │   │   ├── YiiUserAdapter.php
 │   └── Laravel/
 │       ├── LanguageServiceProvider.php
-│       ├──
+│       ├── EloquentLanguageRepository.php
+│       ├── LaravelCacheAdapter.php
+│       ├── LaravelLanguageRepository.php
+│       ├── LaravelMiddleware.php
+│       ├── LaravelRequestAdapter.php
+│       ├── LaravelResponseAdapter.php
+│       ├── LaravelUserAdapter.php
 tests/
-├── LanguageDetectorTest.php
-README.md
+│   ├── LanguageDetectorTest.php
+composer test
 composer.json
 phpunit.xml.dist
 LICENSE
