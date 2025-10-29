@@ -36,6 +36,7 @@ class LanguageDetector
     private string $userAttribute = 'language_code';
     private int $cacheTtl = 3600; // seconds
     private string $cacheKey = 'allowed_languages';
+    private int $pathSegmentIndex = 0; // which path segment to consider for language code, default 0
 
     /**
      * @param RequestInterface $request
@@ -70,6 +71,10 @@ class LanguageDetector
         if (isset($config['cacheKey'])) {
             $this->cacheKey = (string)$config['cacheKey'];
         }
+        if (isset($config['pathSegmentIndex'])) {
+            $this->pathSegmentIndex = (int)$config['pathSegmentIndex'];
+        }
+
     }
 
     /**
@@ -235,13 +240,13 @@ class LanguageDetector
             }
 
             // take first segment
-            $firstSegment = explode('/', trim($path, "/ \t\n\r\0\x0B"))[0] ?? '';
-            if ($firstSegment === '') {
+            $requiredSegment = explode('/', trim($path, "/ \t\n\r\0\x0B"))[$this->pathSegmentIndex] ?? '';
+            if ($requiredSegment === '') {
                 return null;
             }
 
             // normalize to two-letter
-            $lang = strtolower(substr($firstSegment, 0, 2));
+            $lang = strtolower(substr($requiredSegment, 0, 2));
             return in_array($lang, $this->getAllowedLanguages(), true) ? $lang : null;
         } catch (\Throwable $e) {
             return null;
