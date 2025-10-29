@@ -12,13 +12,20 @@ class Bootstrap implements BootstrapInterface
 {
     public array $config = [];
 
+    /**
+     * Bootstrap constructor.
+     * @param array $config
+     */
     public function __construct(array $config = [])
     {
         $this->config = $config;
     }
 
     /**
+     * Bootstrap method to be called during application bootstrap stage.
      * @param \yii\base\Application $app
+     * @return void
+     * @throws \Psr\SimpleCache\InvalidArgumentException
      */
     public function bootstrap($app): void
     {

@@ -8,7 +8,16 @@ namespace LanguageDetector\Core;
  * Caches allowed languages from repository.
  * Finalizes by setting session, cookie, and updating user profile.
  * Configurable via constructor parameters.
+ * LanguageDetector.php
+ * This file is part of LanguageDetector package.
+ * (c) Your Name <Oleksandr Nosov>
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
  * @package LanguageDetector\Core
+ * @license    MIT
+ * @link
+ * @package    LanguageDetector\Core
+ * @author     Your Name <Oleksandr Nosov>
  */
 use LanguageDetector\Core\Contracts\RequestInterface;
 use LanguageDetector\Core\Contracts\ResponseInterface;

@@ -1,25 +1,101 @@
 <?php
 namespace LanguageDetector\Adapters\Yii2;
-
-use LanguageDetector\Core\Contracts\CacheInterface as CoreCacheInterface;
+/**
+ * YiiCacheAdapter.php
+ *
+ * This file is part of LanguageDetector package.
+ *
+ * (c) Your Name <Oleksandr Nosov>
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ * @license    MIT
+ * @link
+ * @package    LanguageDetector\Adapters\Yii2
+ * @author     Your Name <Oleksandr Nosov>
+ */
+use Psr\SimpleCache\CacheInterface;
 use yii\caching\CacheInterface as YiiCacheInterface;
 
-class YiiCacheAdapter implements CoreCacheInterface
+class YiiCacheAdapter implements CacheInterface
 {
-    private YiiCacheInterface $cache;
+    /**
+     * YiiCacheAdapter constructor.
+     * @param YiiCacheInterface $cache
+     */
+    public function __construct(private YiiCacheInterface $cache) {}
 
-    public function __construct(YiiCacheInterface $cache)
+    /**
+     * @inheritDoc
+     */
+    public function get($key, $default = null): mixed
     {
-        $this->cache = $cache;
+        $value = $this->cache->get($key);
+        return $value !== false ? $value : $default;
     }
 
-    public function get($key)
+    /**
+     * @inheritDoc
+     */
+    public function set($key, $value, $ttl = null): bool
     {
-        return $this->cache->get($key);
+        return $this->cache->set($key, $value, is_int($ttl) ? $ttl : null);
     }
 
-    public function set($key, $value, $ttl = null)
+    /**
+     * @inheritDoc
+     */
+    public function delete($key): bool
     {
-        $this->cache->set($key, $value, $ttl);
+        return $this->cache->delete($key);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function clear(): bool
+    {
+        return $this->cache->flush();
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getMultiple($keys, $default = null): iterable
+    {
+        $result = [];
+        foreach ($keys as $key) {
+            $result[$key] = $this->get($key, $default);
+        }
+        return $result;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function setMultiple($values, $ttl = null): bool
+    {
+        foreach ($values as $key => $value) {
+            $this->set($key, $value, $ttl);
+        }
+        return true;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function deleteMultiple($keys): bool
+    {
+        foreach ($keys as $key) {
+            $this->delete($key);
+        }
+        return true;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function has($key): bool
+    {
+        return $this->cache->exists($key);
     }
 }
