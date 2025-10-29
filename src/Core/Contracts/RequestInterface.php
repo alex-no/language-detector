@@ -65,4 +65,13 @@ interface RequestInterface
      * Set a session value.
      */
     public function setSession(string $name, $value): void;
+
+    /**
+     * Return request path in normalized form, without query string.
+     * Example returns: '/en/api/lang-debug' or 'en/api/lang-debug' or '/api/...'
+     * The method should return null for console or when path is not available.
+     *
+     * @return string|null
+     */
+    public function getPath(): ?string;
 }

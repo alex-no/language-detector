@@ -15,7 +15,6 @@ namespace LanguageDetector\Core;
  * file that was distributed with this source code.
  * @package LanguageDetector\Core
  * @license    MIT
- * @link
  * @package    LanguageDetector\Core
  * @author     Your Name <Oleksandr Nosov>
  */
@@ -90,6 +89,7 @@ class LanguageDetector
         $resolvers = [
             fn() => $this->extractValidLang($this->request->post($param)), // POST
             fn() => $this->extractValidLang($this->request->get($param)), // GET
+            fn() => $this->extractValidLang($this->extractLangFromRequestPath()), // PATH
             fn() => ($this->user && !$this->user->isGuest()) ? $this->extractValidLang($this->user->getAttribute($this->userAttribute)) : null, // user profile
             fn() => (!$isApi && $this->request->hasSession()) ? $this->extractValidLang($this->request->getSession($param)) : null, // session
             fn() => (!$isApi && $this->request->hasCookie($param)) ? $this->extractValidLang($this->request->getCookie($param)) : null, // cookie
@@ -212,6 +212,43 @@ class LanguageDetector
     }
 
     /**
+     * Tries to extract language code from request path.
+     * Returns string|null (e.g. 'en', 'uk') or null if not found / invalid.
+     *
+     * This method attempts several common request methods to retrieve the path:
+     *  - getPathInfo()
+     *  - getPath()
+     *  - getRequestUri()
+     *  - getUri()
+     *
+     * It is defensive: if none of these methods exist on the Request adapter,
+     * it returns null.
+     *
+     * @return string|null
+     */
+    protected function extractLangFromRequestPath(): ?string
+    {
+        try {
+            $path = $this->request->getPath();
+            if (empty($path) || !is_string($path)) {
+                return null;
+            }
+
+            // take first segment
+            $firstSegment = explode('/', trim($path, "/ \t\n\r\0\x0B"))[0] ?? '';
+            if ($firstSegment === '') {
+                return null;
+            }
+
+            // normalize to two-letter
+            $lang = strtolower(substr($firstSegment, 0, 2));
+            return in_array($lang, $this->getAllowedLanguages(), true) ? $lang : null;
+        } catch (\Throwable $e) {
+            return null;
+        }
+    }
+
+    /**
      * Gets allowed languages from cache or repository.
      * @return string[]
      * @throws \Throwable
@@ -239,7 +276,7 @@ class LanguageDetector
     protected function refreshAllowedLanguages(): array
     {
         try {
-            // repo должен вернуть массив кодов: ['en', 'uk', ...]
+            // repo should return an array of codes: ['en', 'uk', ...]
             $langs = $this->repo->getEnabledLanguageCodes();
             if (!is_array($langs)) {
                 $langs = [];

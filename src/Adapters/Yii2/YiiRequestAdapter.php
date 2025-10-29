@@ -111,4 +111,44 @@ class YiiRequestAdapter implements RequestInterface
             Yii::$app->session->set($name, $value);
         }
     }
+
+    /**
+     * @inheritDoc
+     */
+    public function getPath(): ?string
+    {
+        try {
+            // Prefer pathInfo (without script name and query)
+            $path = $this->request->getPathInfo();
+            if (!is_string($path) || $path === '') {
+                // getUrl returns relative URL including query string, e.g. "/en/api?x=1"
+                $url = $this->request->getUrl();
+                if (is_string($url) && $url !== '') {
+                    // strip query string
+                    $qPos = strpos($url, '?');
+                    $path = $qPos === false ? $url : substr($url, 0, $qPos);
+                } else {
+                    // fallback to server REQUEST_URI
+                    $uri = $_SERVER['REQUEST_URI'] ?? null;
+                    if (is_string($uri)) {
+                        $qPos = strpos($uri, '?');
+                        $path = $qPos === false ? $uri : substr($uri, 0, $qPos);
+                    } else {
+                        $path = null;
+                    }
+                }
+            }
+
+            if ($path === null) {
+                return null;
+            }
+
+            // normalize: ensure string, trim slashes (we'll return without leading slash)
+            $normalized = trim($path, "/ \t\n\r\0\x0B");
+            return $normalized ?: null;
+        } catch (\Throwable $e) {
+            // on any error return null (defensive)
+            return null;
+        }
+    }
 }
