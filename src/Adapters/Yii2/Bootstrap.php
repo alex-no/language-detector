@@ -44,10 +44,18 @@ class Bootstrap implements BootstrapInterface
         // We create adapters that wrap Yii components.
         $requestAdapter = new YiiRequestAdapter($app->request);
         $responseAdapter = new YiiResponseAdapter($app->response);
-        $userAdapter = ($app->has('user') && !$app->user->isGuest && $app->user->identity)
+        $userAdapter = $app->has('user') && !$app->user->isGuest && $app->user->identity
             ? new YiiUserAdapter($app->user->identity)
             : null;
-        $repo = new YiiLanguageRepository($app->db, $this->config['tableName'] ?? 'language', $this->config['codeField'] ?? 'code', $this->config['enabledField'] ?? 'is_enabled', $this->config['orderField'] ?? 'order');
+
+        $repo = new YiiLanguageRepository(
+            $app->db,
+            $this->config['tableName'] ?? 'language',
+            $this->config['codeField'] ?? 'code',
+            $this->config['enabledField'] ?? 'is_enabled',
+            $this->config['orderField'] ?? 'order'
+        );
+
         $cache = new YiiCacheAdapter($app->cache);
 
         $detector = new LanguageDetector(
@@ -56,21 +64,21 @@ class Bootstrap implements BootstrapInterface
             $userAdapter,
             $repo,
             $cache,
-            array_merge([
-                'paramName' => 'lang',
-                'default' => 'en',
-                'userAttribute' => 'language_code',
-            ], $this->config)
+            $this->config
         );
 
+        // Detect and set application language
         try {
             $lang = $detector->detect(false);
-            if (!empty($lang)) {
-                Yii::$app->language = $lang;
+            if ($lang) {
+                $app->language = $lang;
             }
         } catch (\Throwable $e) {
-            Yii::error('LanguageDetector bootstrap error: ' . $e->getMessage(), __METHOD__);
-            // Don't throw the exception any further—the app should still work.
+            Yii::error('LanguageDetector error: ' . $e->getMessage());
+           // Don't throw the exception any further—the app should still work.
         }
+
+        // Save in container as a component
+        $app->set('languageDetector', $detector);
     }
 }
