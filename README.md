@@ -49,7 +49,9 @@ echo "Detected language: {$lang}";
 Register the component in config/web.php:
 
 ```php
-'bootstrap' => ['languageBootstrap'],
+'bootstrap' => [
+    'languageBootstrap',
+],
 'components' => [
     'languageBootstrap' => [
         'class' => \LanguageDetector\Adapters\Yii2\Bootstrap::class,
