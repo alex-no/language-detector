@@ -184,35 +184,36 @@ composer test
 ## 🧱 Directory Structure
 
 ```css
-src/
-├── Core/
-│   ├── LanguageDetector.php
-│   ├── Contracts/
-│   │   ├── LanguageRepositoryInterface.php
-│   │   ├── RequestInterface.php
-│   │   ├── ResponseInterface.php
-│   │   ├── UserInterface.php
-│   │   ├── AuthenticatorInterface.php
-│   ├── Extractor.php
-├── Adapters/
-│   ├── Yii2/
-│   │   ├── Bootstrap.php
-│   │   ├── YiiCacheAdapter.php
-│   │   ├── YiiLanguageRepository.php
-│   │   ├── YiiRequestAdapter.php
-│   │   ├── YiiResponseAdapter.php
-│   │   ├── YiiUserAdapter.php
-│   └── Laravel/
-│       ├── LanguageServiceProvider.php
-│       ├── EloquentLanguageRepository.php
-│       ├── LaravelCacheAdapter.php
-│       ├── LaravelLanguageRepository.php
-│       ├── LaravelMiddleware.php
-│       ├── LaravelRequestAdapter.php
-│       ├── LaravelResponseAdapter.php
-│       ├── LaravelUserAdapter.php
-tests/
-│   ├── LanguageDetectorTest.php
+language-detector/
+├── src/
+│   ├── Core/
+│   │   ├── LanguageDetector.php
+│   │   ├── Contracts/
+│   │   │   ├── LanguageRepositoryInterface.php
+│   │   │   ├── RequestInterface.php
+│   │   │   ├── ResponseInterface.php
+│   │   │   ├── UserInterface.php
+│   │   │   └── AuthenticatorInterface.php
+│   │   └── Extractor.php
+│   └── Adapters/
+│       ├── Yii2/
+│       │   ├── Bootstrap.php
+│       │   ├── YiiCacheAdapter.php
+│       │   ├── YiiLanguageRepository.php
+│       │   ├── YiiRequestAdapter.php
+│       │   ├── YiiResponseAdapter.php
+│       │   ├── YiiUserAdapter.php
+│       └── Laravel/
+│           ├── LanguageServiceProvider.php
+│           ├── EloquentLanguageRepository.php
+│           ├── LaravelCacheAdapter.php
+│           ├── LaravelLanguageRepository.php
+│           ├── LaravelMiddleware.php
+│           ├── LaravelRequestAdapter.php
+│           ├── LaravelResponseAdapter.php
+│           └── LaravelUserAdapter.php
+├──tests/
+│  └── LanguageDetectorTest.php
 composer test
 composer.json
 phpunit.xml.dist
