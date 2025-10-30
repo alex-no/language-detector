@@ -3,6 +3,11 @@
   "description": "Framework-agnostic language detector with Yii2 and Laravel adapters",
   "type": "library",
   "license": "MIT",
+  "authors": [
+    {
+      "name": "Oleksandr Nosov",
+      "email": "you@example.com"
+    },
   "require": {
     "php": ">=8.0",
     "psr/simple-cache": "^1.0 || ^2.0 || ^3.0"
