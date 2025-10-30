@@ -7,7 +7,7 @@
     {
       "name": "Oleksandr Nosov",
       "email": "you@example.com"
-    },
+    }
   ],
   "require": {
     "php": ">=8.0",
