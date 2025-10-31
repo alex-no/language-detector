@@ -181,7 +181,7 @@ composer test
 ```
 
 
-## 🧱 Directory Structure
+## 📁 Directory Structure
 
 ```css
 language-detector/
