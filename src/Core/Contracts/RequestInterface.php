@@ -6,13 +6,12 @@ namespace LanguageDetector\Core\Contracts;
  *
  * This file is part of LanguageDetector package.
  *
- * (c) Your Name <Oleksandr Nosov>
+ * (c) Oleksandr Nosov <alex@4n.com.ua>
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
- * @license    MIT
- * @link
- * @package    LanguageDetector\Core\Contracts
- * @author     Your Name <Oleksandr Nosov>
+ * @license MIT
+ * @package LanguageDetector\Core\Contracts
+ * @author  Oleksandr Nosov <alex@4n.com.ua>
  */
 interface RequestInterface
 {

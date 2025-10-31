@@ -8,12 +8,12 @@ namespace LanguageDetector\Adapters\Laravel;
  * You may pass either a class-string of the model or an instance that supports the query methods used below.
  *
  * This file is part of LanguageDetector package.
- * (c) Your Name <Oleksandr Nosov>
+ * (c) Oleksandr Nosov <alex@4n.com.ua>
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
- * @license    MIT
- * @package    LanguageDetector\Adapters\Laravel
- * @author     Your Name <Oleksandr Nosov>
+ * @license MIT
+ * @package LanguageDetector\Adapters\Laravel
+ * @author  Oleksandr Nosov <alex@4n.com.ua>
  */
 use LanguageDetector\Core\Contracts\LanguageRepositoryInterface as CoreLanguageRepositoryInterface;
 use Illuminate\Support\Str;

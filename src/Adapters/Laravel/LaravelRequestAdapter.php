@@ -3,12 +3,12 @@ namespace LanguageDetector\Adapters\Laravel;
 /**
  * LaravelRequestAdapter.php
  * This file is part of LanguageDetector package.
- * (c) Your Name <Oleksandr Nosov>
+ * (c) Oleksandr Nosov <alex@4n.com.ua>
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
- * @license    MIT
- * @package    LanguageDetector\Adapters\Laravel
- * @author     Your Name <Oleksandr Nosov>
+ * @license MIT
+ * @package LanguageDetector\Adapters\Laravel
+ * @author  Oleksandr Nosov <alex@4n.com.ua>
  */
 use LanguageDetector\Core\Contracts\RequestInterface as CoreRequestInterface;
 use Illuminate\Http\Request as LaravelRequest;

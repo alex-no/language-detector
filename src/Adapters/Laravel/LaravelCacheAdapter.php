@@ -5,12 +5,12 @@ namespace LanguageDetector\Adapters\Laravel;
  * Adapter to implement PSR-16 (Psr\SimpleCache\CacheInterface) using Laravel's cache repository
  *
  * This file is part of LanguageDetector package.
- * (c) Your Name <Oleksandr Nosov>
+ * (c) Oleksandr Nosov <alex@4n.com.ua>
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
- * @license    MIT
- * @package    LanguageDetector\Adapters\Laravel
- * @author     Your Name <Oleksandr Nosov>
+ * @license MIT
+ * @package LanguageDetector\Adapters\Laravel
+ * @author  Oleksandr Nosov <alex@4n.com.ua>
  */
 use Psr\SimpleCache\CacheInterface as PsrCacheInterface;
 use Illuminate\Contracts\Cache\Repository as CacheRepository;

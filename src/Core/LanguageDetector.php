@@ -10,13 +10,12 @@ namespace LanguageDetector\Core;
  * Configurable via constructor parameters.
  * LanguageDetector.php
  * This file is part of LanguageDetector package.
- * (c) Your Name <Oleksandr Nosov>
+ * (c) Oleksandr Nosov <alex@4n.com.ua>
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
+ * @license MIT
  * @package LanguageDetector\Core
- * @license    MIT
- * @package    LanguageDetector\Core
- * @author     Your Name <Oleksandr Nosov>
+ * @author  Oleksandr Nosov <alex@4n.com.ua>
  */
 use LanguageDetector\Core\Contracts\RequestInterface;
 use LanguageDetector\Core\Contracts\ResponseInterface;

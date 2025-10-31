@@ -5,13 +5,12 @@ namespace LanguageDetector\Adapters\Yii2;
  *
  * This file is part of LanguageDetector package.
  *
- * (c) Your Name <Oleksandr Nosov>
+ * (c) Oleksandr Nosov <alex@4n.com.ua>
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
- * @license    MIT
- * @link
- * @package    LanguageDetector\Adapters\Yii2
- * @author     Your Name <Oleksandr Nosov>
+ * @license MIT
+ * @package LanguageDetector\Adapters\Yii2
+ * @author  Oleksandr Nosov <alex@4n.com.ua>
  */
 use LanguageDetector\Core\Contracts\ResponseInterface;
 use yii\web\Response;

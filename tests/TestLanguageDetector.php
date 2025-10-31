@@ -1,7 +1,16 @@
 <?php
-
 require __DIR__ . '/../vendor/autoload.php';
-
+/**
+ * TestLanguageDetector.php
+ * Simple test script for LanguageDetector with Laravel adapters.
+ * (c) Oleksandr Nosov <alex@4n.com.ua>
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ * @license MIT
+ * @package LanguageDetector\Tests
+ * @author  Oleksandr Nosov <alex@4n.com.ua>
+ * 
+ */
 use LanguageDetector\Core\LanguageDetector;
 use LanguageDetector\Adapters\Laravel\LaravelRequestAdapter;
 use LanguageDetector\Adapters\Laravel\LaravelResponseAdapter;
