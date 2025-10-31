@@ -18,16 +18,13 @@ use yii\web\Cookie;
 
 class YiiResponseAdapter implements ResponseInterface
 {
-    private Response $response;
-
     /**
      * YiiResponseAdapter constructor.
      * @param Response $response
      */
-    public function __construct(Response $response)
-    {
-        $this->response = $response;
-    }
+    public function __construct(
+        private Response $response,
+    ) {}
 
     /**
      * @inheritDoc

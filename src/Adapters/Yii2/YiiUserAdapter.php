@@ -16,16 +16,9 @@ use LanguageDetector\Core\Contracts\UserInterface;
 
 class YiiUserAdapter implements UserInterface
 {
-    private $identity; // ActiveRecord representing user
-
-    /**
-     * YiiUserAdapter constructor.
-     * @param $identity
-     */
-    public function __construct($identity)
-    {
-        $this->identity = $identity;
-    }
+    public function __construct(
+        private $identity, // ActiveRecord representing user
+    ) {}
 
     /**
      * @inheritDoc

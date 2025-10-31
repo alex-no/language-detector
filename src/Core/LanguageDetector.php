@@ -16,6 +16,7 @@ namespace LanguageDetector\Core;
  * @license MIT
  * @package LanguageDetector\Core
  * @author  Oleksandr Nosov <alex@4n.com.ua>
+ * @copyright 2025 Oleksandr Nosov
  */
 use LanguageDetector\Core\Contracts\RequestInterface;
 use LanguageDetector\Core\Contracts\ResponseInterface;

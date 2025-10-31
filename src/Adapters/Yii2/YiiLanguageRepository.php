@@ -18,12 +18,6 @@ use yii\db\Query;
 
 class YiiLanguageRepository implements LanguageRepositoryInterface
 {
-    private Connection $db;
-    private string $table;
-    private string $codeField;
-    private string $enabledField;
-    private string $orderField;
-
     /**
      * YiiLanguageRepository constructor.
      * @param Connection $db
@@ -32,14 +26,13 @@ class YiiLanguageRepository implements LanguageRepositoryInterface
      * @param string $enabledField
      * @param string $orderField
      */
-    public function __construct(Connection $db, string $table = 'language', string $codeField = 'code', string $enabledField = 'is_enabled', string $orderField = 'order')
-    {
-        $this->db = $db;
-        $this->table = $table;
-        $this->codeField = $codeField;
-        $this->enabledField = $enabledField;
-        $this->orderField = $orderField;
-    }
+    public function __construct(
+        private Connection $db,
+        private string $table = 'language',
+        private string $codeField = 'code',
+        private string $enabledField = 'is_enabled',
+        private string $orderField = 'order',
+    ) {}
 
     /**
      * @inheritDoc

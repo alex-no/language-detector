@@ -18,16 +18,13 @@ use LanguageDetector\Core\Contracts\RequestInterface;
 
 class YiiRequestAdapter implements RequestInterface
 {
-    private Request $request;
-
     /**
      * YiiRequestAdapter constructor.
      * @param Request $request
      */
-    public function __construct(Request $request)
-    {
-        $this->request = $request;
-    }
+    public function __construct(
+        private Request $request,
+    ) {}
 
     /**
      * @inheritDoc

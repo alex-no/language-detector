@@ -21,7 +21,9 @@ class YiiCacheAdapter implements CacheInterface
      * YiiCacheAdapter constructor.
      * @param YiiCacheInterface $cache
      */
-    public function __construct(private YiiCacheInterface $cache) {}
+    public function __construct(
+        private YiiCacheInterface $cache
+    ) {}
 
     /**
      * @inheritDoc
