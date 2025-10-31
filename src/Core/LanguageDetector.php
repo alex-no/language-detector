@@ -26,17 +26,27 @@ use Psr\SimpleCache\CacheInterface;
 
 class LanguageDetector
 {
+    private const COOKIE_LIFETIME = 3600 * 24 * 365; // 1 year
+    private const CONFIG_PARAMS = [
+        'paramName'        => 'lang',              // GET/POST param name
+        'default'          => 'en',                // default language code
+        'userAttribute'    => 'language_code',     // user profile attribute name
+        'cacheKey'         => 'allowed_languages', // cache key for allowed languages
+        'cacheTtl'         => 3600,                // seconds
+        'pathSegmentIndex' => 0,                   // which path segment to consider for language code, default 0
+    ];
+
     private RequestInterface $request;
     private ResponseInterface $response;
     private ?UserInterface $user;
     private LanguageRepositoryInterface $repo;
     private CacheInterface $cache;
-    private string $paramName = 'lang';
-    private string $default = 'en';
-    private string $userAttribute = 'language_code';
-    private int $cacheTtl = 3600; // seconds
-    private string $cacheKey = 'allowed_languages';
-    private int $pathSegmentIndex = 0; // which path segment to consider for language code, default 0
+    private string $paramName;
+    private string $default;
+    private string $userAttribute;
+    private string $cacheKey;
+    private int $cacheTtl;
+    private int $pathSegmentIndex;
 
     /**
      * @param RequestInterface $request
@@ -44,7 +54,7 @@ class LanguageDetector
      * @param UserInterface|null $user
      * @param LanguageRepositoryInterface $repo
      * @param CacheInterface $cache
-     * @param array $config  // paramName, default, userAttribute, cacheTtl, cacheKey
+     * @param array $config  // paramName, default, userAttribute, cacheTtl, cacheKey, pathSegmentIndex
      */
     public function __construct(RequestInterface $request, ResponseInterface $response,
                                 ?UserInterface $user, LanguageRepositoryInterface $repo,
@@ -56,25 +66,9 @@ class LanguageDetector
         $this->repo = $repo;
         $this->cache = $cache;
 
-        if (isset($config['paramName'])) {
-            $this->paramName = (string)$config['paramName'];
+        foreach (self::CONFIG_PARAMS as $configKey => $default) {
+            $this->$configKey = $config[$configKey] ?? $default;
         }
-        if (isset($config['default'])) {
-            $this->default = (string)$config['default'];
-        }
-        if (isset($config['userAttribute'])) {
-            $this->userAttribute = (string)$config['userAttribute'];
-        }
-        if (isset($config['cacheTtl'])) {
-            $this->cacheTtl = (int)$config['cacheTtl'];
-        }
-        if (isset($config['cacheKey'])) {
-            $this->cacheKey = (string)$config['cacheKey'];
-        }
-        if (isset($config['pathSegmentIndex'])) {
-            $this->pathSegmentIndex = (int)$config['pathSegmentIndex'];
-        }
-
     }
 
     /**
@@ -131,13 +125,13 @@ class LanguageDetector
                 if ($this->request->hasSession()) {
                     $this->request->setSession($this->paramName, $lang);
                 }
-                $this->response->addCookie($this->paramName, $lang, time() + 3600*24*365);
+                $this->response->addCookie($this->paramName, $lang, time() + self::COOKIE_LIFETIME);
             } catch (\Throwable $e) {
-                // ignore
+                // Ignore session/cookie errors
             }
         }
 
-        if ($this->user && !$this->user->isGuest()) {
+        if ($this->user?->isGuest() === false) {
             try {
                 if ($this->user->getAttribute($this->userAttribute) !== $lang) {
                     $this->user->setAttribute($this->userAttribute, $lang);
@@ -160,49 +154,30 @@ class LanguageDetector
      */
     protected function extractValidLang($input): ?string
     {
-        $prioritized = [];
-
-        if (empty($input)) {
-            return null;
-        } elseif (is_array($input)) {
-            foreach ($input as $lang) {
-                $prioritized[(string)$lang] = 1.0;
-            }
-        } elseif (is_string($input)) {
-            // If header contains multiple items separated by comma
-            $entries = array_map('trim', explode(',', $input));
-            foreach ($entries as $entry) {
-                $parts = explode(';', $entry);
-                $lang = trim($parts[0]);
-                if ($lang === '') {
-                    continue;
-                }
-                $q = 1.0;
-                if (isset($parts[1]) && preg_match('/q=([0-9.]+)/i', $parts[1], $m)) {
-                    $q = (float)$m[1];
-                }
-                $prioritized[$lang] = $q;
-            }
-        } else {
-            // scalar (int/float) cast to string
-            $prioritized[(string)$input] = 1.0;
-        }
-
-        if (empty($prioritized)) {
+      if ($input === null || $input === '' || $input === []) {
             return null;
         }
 
-        // sort by priority desc
+        $prioritized = match (true) {
+            is_array($input) => array_fill_keys(array_map(strval(...), $input), 1.0),
+            is_string($input) => $this->parseAcceptLanguageHeader($input),
+            default => [(string)$input => 1.0],
+        };
+
+        if ($prioritized === []) {
+            return null;
+        }
+
+        // Sort by priority descending
         arsort($prioritized, SORT_NUMERIC);
 
-        // normalize to two-letter codes and keep priority
+        // Normalize to 2-letter codes, preserve highest priority
         $normalized = [];
-        foreach (array_keys($prioritized) as $langCode) {
-            $short = strtolower(substr($langCode, 0, 2));
-            if (!isset($normalized[$short])) {
-                $normalized[$short] = $prioritized[$langCode];
-            }
+        foreach ($prioritized as $lang => $q) {
+            $short = strtolower(substr($lang, 0, 2));
+            $normalized[$short] = max($normalized[$short] ?? 0.0, $q);
         }
+        arsort($normalized, SORT_NUMERIC);
 
         // allowed languages from repo/cache
         $valid = $this->getAllowedLanguages();
@@ -214,6 +189,34 @@ class LanguageDetector
         }
 
         return null;
+    }
+
+    /**
+     * Parses Accept-Language header into prioritized array.
+     * @param string $header
+     * @return array  // [lang => qvalue, ...]
+     */
+    private function parseAcceptLanguageHeader(string $header): array
+    {
+        $prioritized = [];
+
+        foreach (array_map('trim', explode(',', $header)) as $entry) {
+            $parts = explode(';', $entry, 2);
+            $lang = trim($parts[0]);
+            if ($lang === '') {
+                continue;
+            }
+
+            $q = 1.0;
+            if (isset($parts[1])) {
+                preg_match('/q=([0-9.]+)/i', $parts[1], $m);
+                $q = $m[1] ?? 1.0;
+            }
+
+            $prioritized[$lang] = (float)$q;
+        }
+
+        return $prioritized;
     }
 
     /**
@@ -239,16 +242,17 @@ class LanguageDetector
                 return null;
             }
 
-            // take first segment
-            $requiredSegment = explode('/', trim($path, "/ \t\n\r\0\x0B"))[$this->pathSegmentIndex] ?? '';
-            if ($requiredSegment === '') {
+            // take required segment
+            $segments = array_filter(explode('/', trim($path, "/ \t\n\r\0\x0B")));
+            $segment = $segments[$this->pathSegmentIndex] ?? '';
+            if ($segment === '') {
                 return null;
             }
 
             // normalize to two-letter
-            $lang = strtolower(substr($requiredSegment, 0, 2));
+            $lang = strtolower(substr($segment, 0, 2));
             return in_array($lang, $this->getAllowedLanguages(), true) ? $lang : null;
-        } catch (\Throwable $e) {
+        } catch (\Throwable) {
             return null;
         }
     }
@@ -283,12 +287,10 @@ class LanguageDetector
         try {
             // repo should return an array of codes: ['en', 'uk', ...]
             $langs = $this->repo->getEnabledLanguageCodes();
-            if (!is_array($langs)) {
-                $langs = [];
-            }
+            $langs = is_array($langs) ? $langs : [];
             try {
                 $this->cache->set($this->cacheKey, $langs, $this->cacheTtl);
-            } catch (\Throwable $e) {
+            } catch (\Throwable) {
                 // ignore cache set errors
             }
             return $langs;
