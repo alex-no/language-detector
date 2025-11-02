@@ -15,7 +15,7 @@ namespace LanguageDetector\Adapters\Yii2;
 use Yii;
 use yii\base\BootstrapInterface;
 use LanguageDetector\Core\LanguageDetector;
-use LanguageDetector\Adapters\YiiEventDispatcher;
+use LanguageDetector\Adapters\Yii2\YiiEventDispatcher;
 
 /**
  * Yii2 bootstrap adapter — creates the detector core and installs Yii::$app->language
