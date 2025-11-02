@@ -1,5 +1,5 @@
 <?php
-namespace LanguageDetector\Adapters;
+namespace LanguageDetector\Adapters\Yii2;
 
 use LanguageDetector\Core\Contracts\EventDispatcherInterface;
 

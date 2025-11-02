@@ -1,5 +1,5 @@
 <?php
-namespace LanguageDetector\Adapters;
+namespace LanguageDetector\Adapters\Laravel;
 
 use LanguageDetector\Core\Contracts\EventDispatcherInterface;
 use Illuminate\Contracts\Events\Dispatcher as LaravelDispatcher;
