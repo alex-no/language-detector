@@ -44,22 +44,6 @@ The event object exposes three public properties:
 - `newLanguage` (string) — new language code
 - `user` (UserInterface|null) — the user instance (if available)
 
-### How to enable event dispatching
-
-The detector accepts an optional dispatcher via the constructor:
-
-```php
-$detector = new LanguageDetector(
-    $requestAdapter,
-    $responseAdapter,
-    $userAdapter,
-    $languageRepository,
-    $cacheAdapter,
-    $eventDispatcher, // optional, must implement EventDispatcherInterface
-    $config // optional array: paramName, default, userAttribute, cacheKey, cacheTtl, pathSegmentIndex
-);
-```
-
 ---
 
 ## 🚀 Usage in Yii 2
