@@ -22,12 +22,14 @@ use LanguageDetector\Core\Contracts\RequestInterface;
 use LanguageDetector\Core\Contracts\ResponseInterface;
 use LanguageDetector\Core\Contracts\UserInterface;
 use LanguageDetector\Core\Contracts\LanguageRepositoryInterface;
+use LanguageDetector\Core\Contracts\EventDispatcherInterface;
+use LanguageDetector\Core\Events\LanguageChangedEvent;
 use Psr\SimpleCache\CacheInterface;
 
 class LanguageDetector
 {
     private const COOKIE_LIFETIME = 3600 * 24 * 365; // 1 year
-    private const CONFIG_PARAMS = [
+    private const DEFAULT_CONFIG = [
         'paramName'        => 'lang',              // GET/POST param name
         'default'          => 'en',                // default language code
         'userAttribute'    => 'language_code',     // user profile attribute name
@@ -41,6 +43,8 @@ class LanguageDetector
     private ?UserInterface $user;
     private LanguageRepositoryInterface $repo;
     private CacheInterface $cache;
+    private ?EventDispatcherInterface $dispatcher;
+
     private string $paramName;
     private string $default;
     private string $userAttribute;
@@ -56,17 +60,23 @@ class LanguageDetector
      * @param CacheInterface $cache
      * @param array $config  // paramName, default, userAttribute, cacheTtl, cacheKey, pathSegmentIndex
      */
-    public function __construct(RequestInterface $request, ResponseInterface $response,
-                                ?UserInterface $user, LanguageRepositoryInterface $repo,
-                                CacheInterface $cache, array $config = [])
-    {
+    public function __construct(
+        RequestInterface $request,
+        ResponseInterface $response,
+        ?UserInterface $user,
+        LanguageRepositoryInterface $repo,
+        CacheInterface $cache,
+        ?EventDispatcherInterface $dispatcher = null,
+        array $config = []
+    ) {
         $this->request = $request;
         $this->response = $response;
         $this->user = $user;
         $this->repo = $repo;
         $this->cache = $cache;
+        $this->dispatcher = $dispatcher;
 
-        foreach (self::CONFIG_PARAMS as $configKey => $default) {
+        foreach (self::DEFAULT_CONFIG as $configKey => $default) {
             $this->$configKey = $config[$configKey] ?? $default;
         }
     }
@@ -85,20 +95,20 @@ class LanguageDetector
 
         $param = $this->paramName;
 
-        $resolvers = [
+        $sources = [
             fn() => $this->extractValidLang($this->request->post($param)), // POST
             fn() => $this->extractValidLang($this->request->get($param)), // GET
             fn() => $this->extractValidLang($this->extractLangFromRequestPath()), // PATH
-            fn() => ($this->user && !$this->user->isGuest()) ? $this->extractValidLang($this->user->getAttribute($this->userAttribute)) : null, // user profile
-            fn() => (!$isApi && $this->request->hasSession()) ? $this->extractValidLang($this->request->getSession($param)) : null, // session
-            fn() => (!$isApi && $this->request->hasCookie($param)) ? $this->extractValidLang($this->request->getCookie($param)) : null, // cookie
+            fn() => $this->user && !$this->user->isGuest() ? $this->extractValidLang($this->user->getAttribute($this->userAttribute)) : null, // user profile
+            fn() => !$isApi && $this->request->hasSession() ? $this->extractValidLang($this->request->getSession($param)) : null, // session
+            fn() => !$isApi && $this->request->hasCookie($param) ? $this->extractValidLang($this->request->getCookie($param)) : null, // cookie
             fn() => $this->request->hasHeader('Accept-Language') ? $this->extractValidLang($this->request->getHeader('Accept-Language')) : null, // header
         ];
 
-        foreach ($resolvers as $resolve) {
+        foreach ($sources as $source) {
             try {
-                $lang = $resolve();
-            } catch (\Throwable $e) {
+                $lang = $source();
+            } catch (\Throwable) {
                 // ignore single-source errors
                 $lang = null;
             }
@@ -126,18 +136,27 @@ class LanguageDetector
                     $this->request->setSession($this->paramName, $lang);
                 }
                 $this->response->addCookie($this->paramName, $lang, time() + self::COOKIE_LIFETIME);
-            } catch (\Throwable $e) {
+            } catch (\Throwable) {
                 // Ignore session/cookie errors
             }
         }
 
         if ($this->user?->isGuest() === false) {
             try {
-                if ($this->user->getAttribute($this->userAttribute) !== $lang) {
+                $old = (string)$this->user->getAttribute($this->userAttribute);
+                if ($old !== $lang) {
                     $this->user->setAttribute($this->userAttribute, $lang);
                     $this->user->saveAttributes([$this->userAttribute]);
+
+                    if ($this->dispatcher) {
+                        try {
+                            $this->dispatcher->dispatch(new LanguageChangedEvent($old, $lang, $this->user));
+                        } catch (\Throwable) {
+                            // ignore
+                        }
+                    }
                 }
-            } catch (\Throwable $e) {
+            } catch (\Throwable) {
                 // ignore user save errors
             }
         }
@@ -154,7 +173,7 @@ class LanguageDetector
      */
     protected function extractValidLang($input): ?string
     {
-      if ($input === null || $input === '' || $input === []) {
+        if (empty($input)) {
             return null;
         }
 
@@ -266,12 +285,11 @@ class LanguageDetector
     {
         try {
             $cached = $this->cache->get($this->cacheKey);
-        } catch (\Throwable $e) {
-            $cached = false;
-        }
-
-        if (is_array($cached) && $cached !== []) {
-            return $cached;
+            if (is_array($cached) && $cached !== []) {
+                return $cached;
+            }
+        } catch (\Throwable) {
+            // ignore cache get errors
         }
 
         return $this->refreshAllowedLanguages();
@@ -294,7 +312,7 @@ class LanguageDetector
                 // ignore cache set errors
             }
             return $langs;
-        } catch (\Throwable $e) {
+        } catch (\Throwable) {
             return [];
         }
     }

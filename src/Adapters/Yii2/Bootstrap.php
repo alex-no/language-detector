@@ -15,6 +15,7 @@ namespace LanguageDetector\Adapters\Yii2;
 use Yii;
 use yii\base\BootstrapInterface;
 use LanguageDetector\Core\LanguageDetector;
+use LanguageDetector\Adapters\YiiEventDispatcher;
 
 /**
  * Yii2 bootstrap adapter — creates the detector core and installs Yii::$app->language
@@ -56,6 +57,7 @@ class Bootstrap implements BootstrapInterface
         );
 
         $cache = new YiiCacheAdapter($app->cache);
+        $dispatcher = new YiiEventDispatcher('language.changed');
 
         $detector = new LanguageDetector(
             $requestAdapter,
@@ -63,6 +65,7 @@ class Bootstrap implements BootstrapInterface
             $userAdapter,
             $repo,
             $cache,
+            $dispatcher,
             $this->config
         );
 

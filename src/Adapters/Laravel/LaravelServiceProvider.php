@@ -16,6 +16,7 @@ use LanguageDetector\Core\Contracts\RequestInterface;
 use LanguageDetector\Core\Contracts\ResponseInterface;
 use LanguageDetector\Core\Contracts\UserInterface;
 use LanguageDetector\Core\Contracts\LanguageRepositoryInterface;
+use LanguageDetector\Adapters\LaravelEventDispatcher;
 
 class LaravelServiceProvider extends ServiceProvider
 {
@@ -31,12 +32,15 @@ class LaravelServiceProvider extends ServiceProvider
         $this->app->bind(LanguageRepositoryInterface::class, fn($app) => new LaravelLanguageRepository(config('language-detector.language_model')));
 
         $this->app->singleton(LanguageDetector::class, function($app) {
+            $dispatcher = new LaravelEventDispatcher($app['events']);
+
             return new LanguageDetector(
                 $app->make(RequestInterface::class),
                 $app->make(ResponseInterface::class),
                 $app->make(UserInterface::class),
                 $app->make(LanguageRepositoryInterface::class),
                 $app['cache.store'],
+                $dispatcher,
                 config('language-detector', [])
             );
         });

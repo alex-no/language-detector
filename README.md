@@ -63,6 +63,10 @@ You can also call it manually:
 Yii::$app->languageBootstrap->apply();
 ```
 
+ - You can then attach a listener via `Yii::$app->on('language.changed', function($event) { ... })`.
+ - The event provides `$event->oldLanguage`, `$event->newLanguage`, and `$event->user`.
+ - **Note:** The language change event is currently dispatched **only for authenticated users**.
+
 ## 🚀 Usage in Laravel
 
 Register the Service Provider
@@ -118,6 +122,8 @@ How it works
  - Intercepts incoming requests.
  - Detects preferred language based on request or session.
  - Applies it globally using App::setLocale().
+ - You can now listen to `LanguageChangedEvent` using Laravel event listeners.
+ - **Note:** The language change event is currently dispatched **only for authenticated users**.
 
 
 ## ⚙️ Configuration Options
