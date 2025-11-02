@@ -1,4 +1,9 @@
-# Language Detector
+# ✨ Language Detector
+
+[![Packagist Version](https://img.shields.io/packagist/v/alex-no/language-detector.svg)](https://packagist.org/packages/alex-no/language-detector)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![PHP Version](https://img.shields.io/packagist/php-v/alex-no/language-detector)](https://www.php.net/)
+[![Downloads](https://img.shields.io/packagist/dt/alex-no/language-detector.svg)](https://packagist.org/packages/alex-no/language-detector)
 
 A framework-agnostic language detection library for PHP 8.0+  
 with adapters for **Yii 2** and **Laravel**.
@@ -25,6 +30,34 @@ Install via Composer:
 
 ```bash
 composer require alex-no/language-detector
+```
+
+---
+
+## 🔔 Language change event
+
+When the detector changes the stored language for a user (for example when a new `lang` parameter is provided or a higher-priority source selects another language), `LanguageDetector` will update the user's profile attribute and — if an event dispatcher is provided — dispatch a `LanguageDetector\Core\Events\LanguageChangedEvent`.
+
+The event object exposes three public properties:
+
+- `oldLanguage` (string) — previous language code
+- `newLanguage` (string) — new language code
+- `user` (UserInterface|null) — the user instance (if available)
+
+### How to enable event dispatching
+
+The detector accepts an optional dispatcher via the constructor:
+
+```php
+$detector = new LanguageDetector(
+    $requestAdapter,
+    $responseAdapter,
+    $userAdapter,
+    $languageRepository,
+    $cacheAdapter,
+    $eventDispatcher, // optional, must implement EventDispatcherInterface
+    $config // optional array: paramName, default, userAttribute, cacheKey, cacheTtl, pathSegmentIndex
+);
 ```
 
 ---
