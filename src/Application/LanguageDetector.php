@@ -9,6 +9,7 @@ use LanguageDetector\Domain\Contracts\ResponseInterface;
 use LanguageDetector\Domain\Contracts\UserInterface;
 use LanguageDetector\Domain\Contracts\LanguageRepositoryInterface;
 use LanguageDetector\Domain\Events\LanguageChangedEvent;
+use LanguageDetector\Domain\Contracts\EventDispatcherInterface;
 use Psr\SimpleCache\CacheInterface;
 
 class LanguageDetector

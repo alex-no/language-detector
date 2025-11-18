@@ -42,8 +42,8 @@ class Bootstrap implements BootstrapInterface
             $responseAdapter = new YiiResponseAdapter($app->getResponse());
             $userAdapter = new YiiUserAdapter($app->getUser()->identity ?? null);
             $repo = new YiiLanguageRepository($app->getDb());
-            $cache = $app->getCache();
-            $dispatcher = $app; // using Yii application as event dispatcher
+            $cache = new YiiCacheAdapter($app->cache);
+            $dispatcher = new YiiEventDispatcher('language.changed');
 
             // Build sources in default order. If you want to change order, create a custom list and pass to detector.
             $sources = [
@@ -78,7 +78,7 @@ class Bootstrap implements BootstrapInterface
 
             // Optionally expose detector to application for manual usage
             $app->set('languageDetector', $detector);
-        } catch (\Throwable $e) {
+        } catch (\Throwable) {
             // Do not break bootstrap on errors; fail silently
         }
     }

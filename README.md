@@ -56,7 +56,7 @@ Register the "component" and the "bootstrap" in config/web.php:
 ],
 'components' => [
     'languageBootstrap' => [
-        'class' => \LanguageDetector\Adapters\Yii2\Bootstrap::class,
+        'class' => \LanguageDetector\Infrastructure\Adapters\Yii2\Bootstrap::class,
         'paramName' => 'lang',
         'default' => 'en',
         'userAttribute' => 'language_code',
