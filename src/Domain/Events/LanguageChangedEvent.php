@@ -1,7 +1,7 @@
 <?php
-namespace LanguageDetector\Domain\Language\Events;
+namespace LanguageDetector\Domain\Events;
 
-use LanguageDetector\Domain\Language\Contracts\UserInterface;
+use LanguageDetector\Domain\Contracts\UserInterface;
 
 class LanguageChangedEvent
 {

@@ -3,15 +3,15 @@ declare(strict_types=1);
 
 namespace LanguageDetector\Infrastructure\Adapters\Yii2;
 
-use LanguageDetector\Domain\Language\LanguageDetector;
-use LanguageDetector\Domain\Language\Sources\PostSource;
-use LanguageDetector\Domain\Language\Sources\GetSource;
-use LanguageDetector\Domain\Language\Sources\PathSource;
-use LanguageDetector\Domain\Language\Sources\UserProfileSource;
-use LanguageDetector\Domain\Language\Sources\SessionSource;
-use LanguageDetector\Domain\Language\Sources\CookieSource;
-use LanguageDetector\Domain\Language\Sources\HeaderSource;
-use LanguageDetector\Domain\Language\Sources\DefaultSource;
+use LanguageDetector\Application\LanguageDetector;
+use LanguageDetector\Domain\Sources\PostSource;
+use LanguageDetector\Domain\Sources\GetSource;
+use LanguageDetector\Domain\Sources\PathSource;
+use LanguageDetector\Domain\Sources\UserProfileSource;
+use LanguageDetector\Domain\Sources\SessionSource;
+use LanguageDetector\Domain\Sources\CookieSource;
+use LanguageDetector\Domain\Sources\HeaderSource;
+use LanguageDetector\Domain\Sources\DefaultSource;
 use yii\base\BootstrapInterface;
 
 /**

@@ -16,7 +16,7 @@ namespace LanguageDetector\Infrastructure\Adapters\Yii2;
  */
 use yii\web\Response;
 use yii\web\Cookie;
-use LanguageDetector\Domain\Language\Contracts\ResponseInterface;
+use LanguageDetector\Domain\Contracts\ResponseInterface;
 
 class YiiResponseAdapter implements ResponseInterface
 {

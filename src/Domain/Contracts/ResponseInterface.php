@@ -1,5 +1,5 @@
 <?php
-namespace LanguageDetector\Domain\Language\Contracts;
+namespace LanguageDetector\Domain\Contracts;
 /**
  * Interface for framework response adapter
  * ResponseInterface.php
@@ -10,7 +10,7 @@ namespace LanguageDetector\Domain\Language\Contracts;
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  * @license MIT
- * @package LanguageDetector\Domain\Language\Contracts
+ * @package LanguageDetector\Domain\Contracts
  * @author  Oleksandr Nosov <alex@4n.com.ua>
  */
 interface ResponseInterface

@@ -15,7 +15,7 @@ namespace LanguageDetector\Adapters\Laravel;
  * @package LanguageDetector\Adapters\Laravel
  * @author  Oleksandr Nosov <alex@4n.com.ua>
  */
-use LanguageDetector\Domain\Language\Contracts\LanguageRepositoryInterface as CoreLanguageRepositoryInterface;
+use LanguageDetector\Domain\Contracts\LanguageRepositoryInterface as CoreLanguageRepositoryInterface;
 use Illuminate\Support\Str;
 
 class EloquentLanguageRepository implements CoreLanguageRepositoryInterface

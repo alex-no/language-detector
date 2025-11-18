@@ -2,7 +2,7 @@
 namespace LanguageDetector\Adapters\Laravel;
 /**
  * LaravelUserAdapter.php
- * Adapter between Eloquent user (implements Authenticatable) and LanguageDetector\Domain\Language\Contracts\UserInterface
+ * Adapter between Eloquent user (implements Authenticatable) and LanguageDetector\Domain\Contracts\UserInterface
  * This file is part of LanguageDetector package.
  * (c) Oleksandr Nosov <alex@4n.com.ua>
  * For the full copyright and license information, please view the LICENSE
@@ -11,12 +11,12 @@ namespace LanguageDetector\Adapters\Laravel;
  * @package LanguageDetector\Adapters\Laravel
  * @author  Oleksandr Nosov <alex@4n.com.ua>
  */
-use LanguageDetector\Domain\Language\Contracts\UserInterface as CoreUserInterface;
+use LanguageDetector\Domain\Contracts\UserInterface as CoreUserInterface;
 use Illuminate\Contracts\Auth\Authenticatable as LaravelAuthenticatable;
 
 /**
  * LaravelUserAdapter.php
- * Adapter between Eloquent user (implements Authenticatable) and LanguageDetector\Domain\Language\Contracts\UserInterface
+ * Adapter between Eloquent user (implements Authenticatable) and LanguageDetector\Domain\Contracts\UserInterface
  */
 class LaravelUserAdapter implements CoreUserInterface
 {

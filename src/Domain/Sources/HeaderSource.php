@@ -1,11 +1,11 @@
 <?php
 declare(strict_types=1);
 
-namespace LanguageDetector\Domain\Language\Sources;
+namespace LanguageDetector\Domain\Sources;
 
-use LanguageDetector\Domain\Language\Contracts\SourceInterface;
-use LanguageDetector\Domain\Language\Contracts\RequestInterface;
-use LanguageDetector\Domain\Language\Contracts\UserInterface;
+use LanguageDetector\Domain\Contracts\SourceInterface;
+use LanguageDetector\Domain\Contracts\RequestInterface;
+use LanguageDetector\Domain\Contracts\UserInterface;
 
 /**
  * HeaderSource - reads Accept-Language header (or other header)

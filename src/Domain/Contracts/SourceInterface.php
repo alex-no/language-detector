@@ -1,10 +1,10 @@
 <?php
 declare(strict_types=1);
 
-namespace LanguageDetector\Domain\Language\Contracts;
+namespace LanguageDetector\Domain\Contracts;
 
-use LanguageDetector\Domain\Language\Contracts\RequestInterface;
-use LanguageDetector\Domain\Language\Contracts\UserInterface;
+use LanguageDetector\Domain\Contracts\RequestInterface;
+use LanguageDetector\Domain\Contracts\UserInterface;
 
 /**
  * SourceInterface
@@ -12,7 +12,7 @@ use LanguageDetector\Domain\Language\Contracts\UserInterface;
  * Source returns language candidate(s) from a particular source (POST, GET, header, etc).
  * Implementations must return either a string, array, or null.
  *
- * @package LanguageDetector\Domain\Language\Contracts
+ * @package LanguageDetector\Domain\Contracts
  */
 interface SourceInterface
 {

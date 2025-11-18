@@ -10,7 +10,7 @@ namespace LanguageDetector\Adapters\Laravel;
  * @package LanguageDetector\Adapters\Laravel
  * @author  Oleksandr Nosov <alex@4n.com.ua>
  */
-use LanguageDetector\Domain\Language\Contracts\RequestInterface as CoreRequestInterface;
+use LanguageDetector\Domain\Contracts\RequestInterface as CoreRequestInterface;
 use Illuminate\Http\Request as LaravelRequest;
 
 class LaravelRequestAdapter implements CoreRequestInterface

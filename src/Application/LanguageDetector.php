@@ -1,14 +1,14 @@
 <?php
 declare(strict_types=1);
 
-namespace Domain\Language;
+namespace LanguageDetector\Application;
 
-use LanguageDetector\Domain\Language\Contracts\SourceInterface;
-use LanguageDetector\Domain\Language\Contracts\RequestInterface;
-use LanguageDetector\Domain\Language\Contracts\ResponseInterface;
-use LanguageDetector\Domain\Language\Contracts\UserInterface;
-use LanguageDetector\Domain\Language\Contracts\LanguageRepositoryInterface;
-use LanguageDetector\Domain\Language\Events\LanguageChangedEvent;
+use LanguageDetector\Domain\Contracts\SourceInterface;
+use LanguageDetector\Domain\Contracts\RequestInterface;
+use LanguageDetector\Domain\Contracts\ResponseInterface;
+use LanguageDetector\Domain\Contracts\UserInterface;
+use LanguageDetector\Domain\Contracts\LanguageRepositoryInterface;
+use LanguageDetector\Domain\Events\LanguageChangedEvent;
 use Psr\SimpleCache\CacheInterface;
 
 class LanguageDetector
@@ -92,14 +92,14 @@ class LanguageDetector
     protected function buildDefaultSources(): array
     {
         return [
-            new \LanguageDetector\Domain\Language\Sources\PostSource($this->paramName),
-            new \LanguageDetector\Domain\Language\Sources\GetSource($this->paramName),
-            new \LanguageDetector\Domain\Language\Sources\PathSource($this->pathSegmentIndex),
-            new \LanguageDetector\Domain\Language\Sources\UserProfileSource($this->paramName),
-            new \LanguageDetector\Domain\Language\Sources\SessionSource($this->paramName),
-            new \LanguageDetector\Domain\Language\Sources\CookieSource($this->paramName),
-            new \LanguageDetector\Domain\Language\Sources\HeaderSource('Accept-Language'),
-            new \LanguageDetector\Domain\Language\Sources\DefaultSource($this->default),
+            new \LanguageDetector\Domain\Sources\PostSource($this->paramName),
+            new \LanguageDetector\Domain\Sources\GetSource($this->paramName),
+            new \LanguageDetector\Domain\Sources\PathSource($this->pathSegmentIndex),
+            new \LanguageDetector\Domain\Sources\UserProfileSource($this->paramName),
+            new \LanguageDetector\Domain\Sources\SessionSource($this->paramName),
+            new \LanguageDetector\Domain\Sources\CookieSource($this->paramName),
+            new \LanguageDetector\Domain\Sources\HeaderSource('Accept-Language'),
+            new \LanguageDetector\Domain\Sources\DefaultSource($this->default),
         ];
     }
 

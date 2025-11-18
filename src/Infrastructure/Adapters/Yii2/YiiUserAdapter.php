@@ -14,7 +14,7 @@ namespace LanguageDetector\Infrastructure\Adapters\Yii2;
  * @package LanguageDetector\Infrastructure\Adapters\Yii2
  * @author  Oleksandr Nosov <alex@4n.com.ua>
  */
-use LanguageDetector\Domain\Language\Contracts\UserInterface;
+use LanguageDetector\Domain\Contracts\UserInterface;
 
 class YiiUserAdapter implements UserInterface
 {

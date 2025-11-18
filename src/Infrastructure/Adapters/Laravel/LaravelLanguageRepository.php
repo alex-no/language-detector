@@ -10,7 +10,7 @@ namespace LanguageDetector\Adapters\Laravel;
  * @package LanguageDetector\Adapters\Laravel
  * @author  Oleksandr Nosov <alex@4n.com.ua>
  */
-use LanguageDetector\Domain\Language\Contracts\LanguageRepositoryInterface;
+use LanguageDetector\Domain\Contracts\LanguageRepositoryInterface;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 

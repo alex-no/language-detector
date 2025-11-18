@@ -1,16 +1,16 @@
 <?php
 declare(strict_types=1);
 
-namespace LanguageDetector\Domain\Language\Sources;
+namespace LanguageDetector\Domain\Sources;
 
-use LanguageDetector\Domain\Language\Contracts\SourceInterface;
-use LanguageDetector\Domain\Language\Contracts\RequestInterface;
-use LanguageDetector\Domain\Language\Contracts\UserInterface;
+use LanguageDetector\Domain\Contracts\SourceInterface;
+use LanguageDetector\Domain\Contracts\RequestInterface;
+use LanguageDetector\Domain\Contracts\UserInterface;
 
 /**
- * SessionSource - reads language from session
+ * CookieSource - reads language from cookie
  */
-class SessionSource implements SourceInterface
+class CookieSource implements SourceInterface
 {
     private string $param;
 
@@ -21,7 +21,7 @@ class SessionSource implements SourceInterface
 
     public function getKey(): string
     {
-        return 'session';
+        return 'cookie';
     }
 
     public function getLanguage(RequestInterface $request, ?UserInterface $user, bool $isApi): ?string
@@ -30,10 +30,10 @@ class SessionSource implements SourceInterface
             return null;
         }
         try {
-            if (!$request->hasSession()) {
+            if (!$request->hasCookie($this->param)) {
                 return null;
             }
-            $val = $request->getSession($this->param);
+            $val = $request->getCookie($this->param);
             return $val === '' ? null : (is_string($val) ? $val : (string)$val);
         } catch (\Throwable) {
             return null;

@@ -11,11 +11,11 @@ namespace LanguageDetector\Adapters\Laravel;
  * @author  Oleksandr Nosov <alex@4n.com.ua>
  */
 use Illuminate\Support\ServiceProvider;
-use LanguageDetector\Domain\Language\LanguageDetector;
-use LanguageDetector\Domain\Language\Contracts\RequestInterface;
-use LanguageDetector\Domain\Language\Contracts\ResponseInterface;
-use LanguageDetector\Domain\Language\Contracts\UserInterface;
-use LanguageDetector\Domain\Language\Contracts\LanguageRepositoryInterface;
+use LanguageDetector\Application\LanguageDetector;
+use LanguageDetector\Domain\Contracts\RequestInterface;
+use LanguageDetector\Domain\Contracts\ResponseInterface;
+use LanguageDetector\Domain\Contracts\UserInterface;
+use LanguageDetector\Domain\Contracts\LanguageRepositoryInterface;
 use LanguageDetector\Adapters\LaravelEventDispatcher;
 
 class LaravelServiceProvider extends ServiceProvider

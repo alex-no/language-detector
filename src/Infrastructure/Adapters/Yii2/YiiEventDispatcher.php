@@ -1,7 +1,7 @@
 <?php
 namespace LanguageDetector\Infrastructure\Adapters\Yii2;
 
-use LanguageDetector\Domain\Language\Contracts\EventDispatcherInterface;
+use LanguageDetector\Domain\Contracts\EventDispatcherInterface;
 
 /**
  * YiiEventDispatcher

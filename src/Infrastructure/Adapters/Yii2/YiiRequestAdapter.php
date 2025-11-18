@@ -16,7 +16,7 @@ namespace LanguageDetector\Infrastructure\Adapters\Yii2;
  */
 use Yii;
 use yii\web\Request;
-use LanguageDetector\Domain\Language\Contracts\RequestInterface;
+use LanguageDetector\Domain\Contracts\RequestInterface;
 
 class YiiRequestAdapter implements RequestInterface
 {

@@ -10,7 +10,7 @@ namespace LanguageDetector\Adapters\Laravel;
  * @package LanguageDetector\Adapters\Laravel
  * @author  Oleksandr Nosov <alex@4n.com.ua>
  */
-use LanguageDetector\Domain\Language\Contracts\ResponseInterface as CoreResponseInterface;
+use LanguageDetector\Domain\Contracts\ResponseInterface as CoreResponseInterface;
 use Illuminate\Http\Response as LaravelResponse;
 use Symfony\Component\HttpFoundation\Cookie as SymfonyCookie;
 

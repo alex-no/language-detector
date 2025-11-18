@@ -16,7 +16,7 @@ namespace LanguageDetector\Infrastructure\Adapters\Yii2;
  */
 use yii\db\Connection;
 use yii\db\Query;
-use LanguageDetector\Domain\Language\Contracts\LanguageRepositoryInterface;
+use LanguageDetector\Domain\Contracts\LanguageRepositoryInterface;
 
 class YiiLanguageRepository implements LanguageRepositoryInterface
 {

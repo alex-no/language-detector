@@ -11,7 +11,7 @@ namespace LanguageDetector\Adapters\Laravel;
  * @author  Oleksandr Nosov <alex@4n.com.ua>
  */
 use Closure;
-use LanguageDetector\Domain\Language\LanguageDetector;
+use LanguageDetector\Application\LanguageDetector;
 use Illuminate\Http\Request;
 
 class LaravelMiddleware
