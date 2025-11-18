@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": "../../.."
+		},
+		{
+			"path": "../../../../field-lingo"
+		},
+		{
+			"path": "../../../../field-lingo-gii"
+		}
+	],
+	"settings": {}
+}
