@@ -2,7 +2,17 @@
 declare(strict_types=1);
 
 namespace LanguageDetector\Domain\Sources;
-
+/**
+ * CookieSource.php
+ * This file is part of LanguageDetector package.
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ *
+ * @license MIT
+ * @package LanguageDetector\Domain\Sources
+ * @author  Oleksandr Nosov <alex@4n.com.ua>
+ * @copyright 2025 Oleksandr Nosov
+ */
 use LanguageDetector\Domain\Contracts\SourceInterface;
 use LanguageDetector\Domain\Contracts\RequestInterface;
 use LanguageDetector\Domain\Contracts\UserInterface;

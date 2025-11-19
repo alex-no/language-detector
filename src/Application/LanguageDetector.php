@@ -2,26 +2,47 @@
 declare(strict_types=1);
 
 namespace LanguageDetector\Application;
-
-use LanguageDetector\Domain\Contracts\SourceInterface;
+/**
+ * Core language detector class
+ * Detects user language based on request, user profile, cookies, etc.
+ * Uses a set of resolvers in priority order.
+ * Caches allowed languages from repository.
+ * Finalizes by setting session, cookie, and updating user profile.
+ * Configurable via constructor parameters.
+ * LanguageDetector.php
+ * This file is part of LanguageDetector package.
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ *
+ * @license MIT
+ * @package LanguageDetector\Application
+ * @author  Oleksandr Nosov <alex@4n.com.ua>
+ * @copyright 2025 Oleksandr Nosov
+ */
+// Import necessary interfaces (contracts)
 use LanguageDetector\Domain\Contracts\RequestInterface;
 use LanguageDetector\Domain\Contracts\ResponseInterface;
 use LanguageDetector\Domain\Contracts\UserInterface;
 use LanguageDetector\Domain\Contracts\LanguageRepositoryInterface;
-use LanguageDetector\Domain\Events\LanguageChangedEvent;
 use LanguageDetector\Domain\Contracts\EventDispatcherInterface;
+use LanguageDetector\Domain\Contracts\SourceInterface;
 use Psr\SimpleCache\CacheInterface;
+// Import event class
+use LanguageDetector\Domain\Events\LanguageChangedEvent;
+// Import source classes (Sources)
+use LanguageDetector\Domain\Sources\PostSource;
+use LanguageDetector\Domain\Sources\GetSource;
+use LanguageDetector\Domain\Sources\PathSource;
+use LanguageDetector\Domain\Sources\UserProfileSource;
+use LanguageDetector\Domain\Sources\SessionSource;
+use LanguageDetector\Domain\Sources\CookieSource;
+use LanguageDetector\Domain\Sources\HeaderSource;
+use LanguageDetector\Domain\Sources\DefaultSource;
 
 class LanguageDetector
 {
-   private const COOKIE_LIFETIME = 3600 * 24 * 365;
-
-    private RequestInterface $request;
-    private ResponseInterface $response;
-    private ?UserInterface $user;
-    private LanguageRepositoryInterface $repo;
-    private CacheInterface $cache;
-    private ?EventDispatcherInterface $dispatcher;
+    private const COOKIE_LIFETIME = 3600 * 24 * 365;
 
     /** @var SourceInterface[] */
     private array $sources = [];
@@ -33,11 +54,12 @@ class LanguageDetector
     private int $pathSegmentIndex;
 
     private const DEFAULT_CONFIG = [
-        'paramName'        => 'lang',
-        'default'          => 'en',
-        'cacheKey'         => 'allowed_languages',
-        'cacheTtl'         => 3600,
-        'pathSegmentIndex' => 0,
+        'paramName'        => 'lang',              // GET/POST param name
+        'default'          => 'en',                // default language code
+        'cacheKey'         => 'allowed_languages', // cache key for allowed languages
+        'cacheTtl'         => 3600,                // seconds
+        'pathSegmentIndex' => 0,                   // which path segment to consider for language code, default 0
+        //'userAttribute'    => 'language_code',     // user profile attribute name
     ];
 
     /**
@@ -52,21 +74,14 @@ class LanguageDetector
      *                      - sources: array of SourceInterface instances (optional)
      */
     public function __construct(
-        RequestInterface $request,
-        ResponseInterface $response,
-        ?UserInterface $user,
-        LanguageRepositoryInterface $repo,
-        CacheInterface $cache,
-        ?EventDispatcherInterface $dispatcher = null,
-        array $config = []
+        private readonly RequestInterface          $request,
+        private readonly ResponseInterface         $response,
+        private readonly ?UserInterface            $user,
+        private readonly LanguageRepositoryInterface $repo,
+        private readonly CacheInterface            $cache,
+        private readonly ?EventDispatcherInterface  $dispatcher = null,
+        array $config = [],
     ) {
-        $this->request = $request;
-        $this->response = $response;
-        $this->user = $user;
-        $this->repo = $repo;
-        $this->cache = $cache;
-        $this->dispatcher = $dispatcher;
-
         foreach (self::DEFAULT_CONFIG as $k => $v) {
             $this->$k = $config[$k] ?? $v;
         }
@@ -93,14 +108,14 @@ class LanguageDetector
     protected function buildDefaultSources(): array
     {
         return [
-            new \LanguageDetector\Domain\Sources\PostSource($this->paramName),
-            new \LanguageDetector\Domain\Sources\GetSource($this->paramName),
-            new \LanguageDetector\Domain\Sources\PathSource($this->pathSegmentIndex),
-            new \LanguageDetector\Domain\Sources\UserProfileSource($this->paramName),
-            new \LanguageDetector\Domain\Sources\SessionSource($this->paramName),
-            new \LanguageDetector\Domain\Sources\CookieSource($this->paramName),
-            new \LanguageDetector\Domain\Sources\HeaderSource('Accept-Language'),
-            new \LanguageDetector\Domain\Sources\DefaultSource($this->default),
+            new PostSource($this->paramName),
+            new GetSource($this->paramName),
+            new PathSource($this->pathSegmentIndex),
+            new UserProfileSource($this->paramName),
+            new SessionSource($this->paramName),
+            new CookieSource($this->paramName),
+            new HeaderSource('Accept-Language'),
+            new DefaultSource($this->default),
         ];
     }
 
@@ -141,26 +156,29 @@ class LanguageDetector
     }
 
     /**
-     * Finalize: set session/cookie and update user profile + dispatch event.
+     * Finalizes detected language by setting session, cookie, and updating user profile.
      *
      * @param string $lang
      * @param bool $isApi
      * @return string
+     * @throws \Throwable
      */
     protected function finalize(string $lang, bool $isApi): string
     {
         if (!$isApi) {
+            // set session & cookie via adapters
             try {
                 if ($this->request->hasSession()) {
                     $this->request->setSession($this->paramName, $lang);
                 }
                 $this->response->addCookie($this->paramName, $lang, time() + self::COOKIE_LIFETIME);
             } catch (\Throwable) {
-                // ignore
+                // Ignore session/cookie errors
             }
         }
 
         if ($this->user?->isGuest() === false) {
+            // set user language via adapters
             try {
                 $old = (string)$this->user->getAttribute($this->paramName);
                 if ($old !== $lang) {
@@ -175,7 +193,7 @@ class LanguageDetector
                     }
                 }
             } catch (\Throwable) {
-                // ignore
+                // ignore user save errors
             }
         }
 
@@ -204,8 +222,10 @@ class LanguageDetector
             return null;
         }
 
+        // Sort by priority descending
         arsort($prioritized, SORT_NUMERIC);
 
+        // Normalize to 2-letter codes, preserve highest priority
         $normalized = [];
         foreach ($prioritized as $lang => $q) {
             $short = strtolower(substr($lang, 0, 2));
@@ -213,6 +233,7 @@ class LanguageDetector
         }
         arsort($normalized, SORT_NUMERIC);
 
+        // allowed languages from repo/cache
         $valid = $this->getAllowedLanguages();
 
         foreach (array_keys($normalized) as $lang) {
@@ -225,10 +246,10 @@ class LanguageDetector
     }
 
     /**
-     * Parse Accept-Language header into [lang=>q].
+     * Parses Accept-Language header into prioritized array.
      *
      * @param string $header
-     * @return array
+     * @return array  // [lang => qvalue, ...]
      */
     private function parseAcceptLanguageHeader(string $header): array
     {
@@ -251,9 +272,10 @@ class LanguageDetector
     }
 
     /**
-     * Get allowed languages from cache or repository.
+     * Gets allowed languages from cache or repository.
      *
      * @return string[]
+     * @throws \Throwable
      */
     protected function getAllowedLanguages(): array
     {
@@ -263,19 +285,21 @@ class LanguageDetector
                 return $cached;
             }
         } catch (\Throwable) {
-            // ignore
+            // ignore cache get errors
         }
         return $this->refreshAllowedLanguages();
     }
 
     /**
-     * Refresh list from repository and update cache.
+     * Refreshes allowed languages from repository and updates cache.
      *
      * @return string[]
+     * @throws \Throwable
      */
     protected function refreshAllowedLanguages(): array
     {
         try {
+            // repo should return an array of codes: ['en', 'uk', ...]
             $langs = $this->repo->getEnabledLanguageCodes();
             $langs = is_array($langs) ? $langs : [];
             try {

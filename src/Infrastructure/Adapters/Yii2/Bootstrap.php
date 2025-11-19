@@ -2,7 +2,18 @@
 declare(strict_types=1);
 
 namespace LanguageDetector\Infrastructure\Adapters\Yii2;
-
+/**
+ * Bootstrap.php
+ * This file is part of LanguageDetector package.
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ *
+ * @license MIT
+ * @package LanguageDetector\Infrastructure\Adapters\Yii2
+ * @author  Oleksandr Nosov <alex@4n.com.ua>
+ * @copyright 2025 Oleksandr Nosov
+ */
 use LanguageDetector\Application\LanguageDetector;
 use LanguageDetector\Domain\Sources\PostSource;
 use LanguageDetector\Domain\Sources\GetSource;

@@ -2,17 +2,27 @@
 declare(strict_types=1);
 
 namespace LanguageDetector\Domain\Contracts;
-
+/**
+ * SourceInterface.php
+ * This file is part of LanguageDetector package.
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ *
+ * Source returns language candidate(s) from a particular source (POST, GET, header, etc).
+ * Implementations must return either a string, array, or null.
+ *
+ * @license MIT
+ * @package LanguageDetector\Domain\Contracts
+ * @author  Oleksandr Nosov <alex@4n.com.ua>
+ * @copyright 2025 Oleksandr Nosov
+ */
 use LanguageDetector\Domain\Contracts\RequestInterface;
 use LanguageDetector\Domain\Contracts\UserInterface;
 
 /**
  * SourceInterface
  *
- * Source returns language candidate(s) from a particular source (POST, GET, header, etc).
- * Implementations must return either a string, array, or null.
  *
- * @package LanguageDetector\Domain\Contracts
  */
 interface SourceInterface
 {

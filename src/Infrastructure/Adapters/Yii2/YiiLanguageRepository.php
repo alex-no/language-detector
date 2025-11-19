@@ -4,15 +4,15 @@ declare(strict_types=1);
 namespace LanguageDetector\Infrastructure\Adapters\Yii2;
 /**
  * YiiLanguageRepository.php
- *
  * This file is part of LanguageDetector package.
  *
- * (c) Oleksandr Nosov <alex@4n.com.ua>
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
+ *
  * @license MIT
  * @package LanguageDetector\Infrastructure\Adapters\Yii2
  * @author  Oleksandr Nosov <alex@4n.com.ua>
+ * @copyright 2025 Oleksandr Nosov
  */
 use yii\db\Connection;
 use yii\db\Query;

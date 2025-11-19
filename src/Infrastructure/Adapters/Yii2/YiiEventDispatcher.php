@@ -1,13 +1,17 @@
 <?php
 namespace LanguageDetector\Infrastructure\Adapters\Yii2;
-
+/**
+ * LanguageDetector
+ * Adapter to dispatch events in Yii2 applications.
+ * PHP version 7.4+
+ *
+ * @license MIT
+ * @package LanguageDetector\Infrastructure\Adapters\Yii2
+ * @author  Oleksandr Nosov <alex@4n.com.ua>
+ * @copyright 2025 Oleksandr Nosov
+ */
 use LanguageDetector\Domain\Contracts\EventDispatcherInterface;
 
-/**
- * YiiEventDispatcher
- *
- * Adapter to dispatch events in Yii2 applications.
- */
 class YiiEventDispatcher implements EventDispatcherInterface
 {
     private string $eventName;

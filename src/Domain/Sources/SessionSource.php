@@ -2,14 +2,22 @@
 declare(strict_types=1);
 
 namespace LanguageDetector\Domain\Sources;
-
+/**
+ * SessionSource.php
+ * This file is part of LanguageDetector package.
+ * SessionSource - reads language from session
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ *
+ * @license MIT
+ * @package LanguageDetector\Domain\Contracts
+ * @author  Oleksandr Nosov <alex@4n.com.ua>
+ * @copyright 2025 Oleksandr Nosov
+ */
 use LanguageDetector\Domain\Contracts\SourceInterface;
 use LanguageDetector\Domain\Contracts\RequestInterface;
 use LanguageDetector\Domain\Contracts\UserInterface;
 
-/**
- * SessionSource - reads language from session
- */
 class SessionSource implements SourceInterface
 {
     private string $param;
