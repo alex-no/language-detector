@@ -243,7 +243,7 @@ language-detector/
 │       └── Adapters/
 │           ├── Yii2/
 │           │   ├── Bootstrap.php
-│           │   ├── YiiRequestAdapter.php               // implements LanguageDetector\Domain\Contracts\RequestInterface
+│           │   ├── YiiRequestAdapter.php               // implements RequestInterface
 │           │   ├── YiiResponseAdapter.php              // implements ResponseInterface
 │           │   ├── YiiUserAdapter.php                  // implements UserInterface
 │           │   ├── YiiCacheAdapter.php                 // implements CacheInterface
@@ -251,15 +251,15 @@ language-detector/
 │           │   └── YiiEventDispatcher.php              // implements EventDispatcherInterface
 │           ├── Symfony/
 │           │   ├── RequestListener.php
-│           │   ├── SymfonyRequestAdapter.php           // implements LanguageDetector\Domain\Contracts\RequestInterface
+│           │   ├── SymfonyRequestAdapter.php           // implements RequestInterface
 │           │   ├── SymfonyResponseAdapter.php          // implements ResponseInterface
 │           │   ├── SymfonyUserAdapter.php              // implements UserInterface
 │           │   ├── SymfonyCacheAdapter.php             // implements CacheInterface
 │           │   ├── SymfonyLanguageRepository.php       // implements LanguageRepositoryInterface
 │           │   └── SymfonyEventDispatcher.php          // implements EventDispatcherInterface
 │           └── Laravel/
-│               ├── Bootstrap.php
-│               ├── LanguageDetectorServiceProvider.php // implements LanguageDetector\Domain\Contracts\RequestInterface
+│               ├── LanguageDetectorServiceProvider.php
+│               ├── LaravelRequestAdapter.php           // implements RequestInterface
 │               ├── LaravelResponseAdapter.php          // implements ResponseInterface
 │               ├── LaravelUserAdapter.php              // implements UserInterface
 │               ├── LaravelCacheAdapter.php             // implements CacheInterface
@@ -267,7 +267,6 @@ language-detector/
 │               └── LaravelEventDispatcher.php          // implements EventDispatcherInterface
 ├── tests
 │   └── TestLanguageDetector.php
-composer test
 composer.json
 phpunit.xml.dist
 LICENSE
