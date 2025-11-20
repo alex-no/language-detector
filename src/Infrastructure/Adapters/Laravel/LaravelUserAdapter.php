@@ -1,34 +1,32 @@
 <?php
-namespace LanguageDetector\Adapters\Laravel;
-/**
- * LaravelUserAdapter.php
- * Adapter between Eloquent user (implements Authenticatable) and LanguageDetector\Domain\Contracts\UserInterface
- * This file is part of LanguageDetector package.
- * (c) Oleksandr Nosov <alex@4n.com.ua>
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- * @license MIT
- * @package LanguageDetector\Adapters\Laravel
- * @author  Oleksandr Nosov <alex@4n.com.ua>
- */
-use LanguageDetector\Domain\Contracts\UserInterface as CoreUserInterface;
-use Illuminate\Contracts\Auth\Authenticatable as LaravelAuthenticatable;
+declare(strict_types=1);
 
+namespace LanguageDetector\Infrastructure\Adapters\Laravel;
 /**
- * LaravelUserAdapter.php
- * Adapter between Eloquent user (implements Authenticatable) and LanguageDetector\Domain\Contracts\UserInterface
+ * Adapter for Eloquent User (or any user object)
+ * implements UserInterface.
+ * Handles null user (guest) case.
+ *
+ * @license MIT
+ * @package LanguageDetector\Infrastructure\Adapters\Laravel
+ * @author  Oleksandr Nosov <alex@4n.com.ua>
+ * @copyright 2025 Oleksandr Nosov
  */
-class LaravelUserAdapter implements CoreUserInterface
+use LanguageDetector\Domain\Contracts\UserInterface;
+
+class LaravelUserAdapter implements UserInterface
 {
     /**
-     * @param LaravelAuthenticatable|null $user
+     * Constructor
+     * @param mixed $user Laravel user object (Eloquent model) or null for guest
      */
     public function __construct(
-        private ?LaravelAuthenticatable $user
+        private $user // typically Eloquent model or null
     ) {}
 
     /**
-     * @inheritDoc
+     * Determine if user is guest (not authenticated).
+     * @return bool
      */
     public function isGuest(): bool
     {
@@ -36,67 +34,57 @@ class LaravelUserAdapter implements CoreUserInterface
     }
 
     /**
-     * @inheritDoc
+     * Get a user attribute by name.
+     * @param string $name Attribute name
+     * @return mixed|null Attribute value or null if not present
      */
     public function getAttribute(string $name): mixed
     {
-        if ($this->user === null) {
-            return null;
-        }
-
-        // Most Eloquent models implement getAttribute()
         try {
-            if (method_exists($this->user, 'getAttribute')) {
-                return $this->user->getAttribute($name);
+            if ($this->user === null) {
+                return null;
             }
-            // fallback to property access
-            return $this->user->{$name} ?? null;
-        } catch (\Throwable $e) {
+            return $this->user->{$name} ?? (is_array($this->user) ? ($this->user[$name] ?? null) : null);
+        } catch (\Throwable) {
             return null;
         }
     }
 
     /**
-     * @inheritDoc
+     * Set a user attribute by name.
+     * @param string $name Attribute name
+     * @param mixed $value Attribute value
+     * @return void
      */
     public function setAttribute(string $name, $value): void
     {
-        if ($this->user === null) {
-            return;
-        }
-
         try {
-            if (method_exists($this->user, 'setAttribute')) {
-                $this->user->setAttribute($name, $value);
+            if ($this->user === null) {
                 return;
             }
             $this->user->{$name} = $value;
-        } catch (\Throwable $e) {
+        } catch (\Throwable) {
             // ignore
         }
     }
 
     /**
-     * Save specified attributes to persistent storage.
-     * For Eloquent models we simply call save(); callers are expected to set attributes first.
-     * @param string[] $names
+     * Save user attributes (if applicable).
+     * @param array $names Attribute names to save
+     * @return void
      */
     public function saveAttributes(array $names): void
     {
-        if ($this->user === null) {
-            return;
-        }
-
         try {
-            // if model supports saveQuietly (Laravel 8+), prefer it to avoid events noise
-            if (method_exists($this->user, 'saveQuietly')) {
-                $this->user->saveQuietly();
+            if ($this->user === null) {
                 return;
             }
-            $this->user->save();
-        } catch (\Throwable $e) {
-            // ignore save errors
+            if (method_exists($this->user, 'save')) {
+                // If Eloquent supports save()
+                $this->user->save();
+            }
+        } catch (\Throwable) {
+            // ignore
         }
     }
 }
-

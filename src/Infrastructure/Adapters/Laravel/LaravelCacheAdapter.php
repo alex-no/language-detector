@@ -1,27 +1,26 @@
 <?php
-namespace LanguageDetector\Adapters\Laravel;
-/**
- * LaravelCacheAdapter.php
- * Adapter to implement PSR-16 (Psr\SimpleCache\CacheInterface) using Laravel's cache repository
- *
- * This file is part of LanguageDetector package.
- * (c) Oleksandr Nosov <alex@4n.com.ua>
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- * @license MIT
- * @package LanguageDetector\Adapters\Laravel
- * @author  Oleksandr Nosov <alex@4n.com.ua>
- */
-use Psr\SimpleCache\CacheInterface as PsrCacheInterface;
-use Illuminate\Contracts\Cache\Repository as CacheRepository;
+declare(strict_types=1);
 
-class LaravelCacheAdapter implements PsrCacheInterface
+namespace LanguageDetector\Infrastructure\Adapters\Laravel;
+/**
+ * SimpleCache adapter wrapping Laravel cache repository.
+ *
+ * @license MIT
+ * @package LanguageDetector\Infrastructure\Adapters\Laravel
+ * @author  Oleksandr Nosov <alex@4n.com.ua>
+ * @copyright 2025 Oleksandr Nosov
+ */
+use Psr\SimpleCache\CacheInterface;
+use Illuminate\Contracts\Cache\Repository as LaravelCache;
+
+class LaravelCacheAdapter implements CacheInterface
 {
     /**
-     * @param CacheRepository $cache
+     * Constructor
+     * @param LaravelCache $cache Laravel cache repository
      */
     public function __construct(
-        private CacheRepository $cache
+        private LaravelCache $cache
     ) {}
 
     /**
@@ -29,12 +28,8 @@ class LaravelCacheAdapter implements PsrCacheInterface
      */
     public function get($key, $default = null): mixed
     {
-        try {
-            $value = $this->cache->get($key);
-            return $value === null ? $default : $value;
-        } catch (\Throwable $e) {
-            return $default;
-        }
+        $value = $this->cache->get($key, $default);
+        return $value === null ? $default : $value;
     }
 
     /**
@@ -43,19 +38,11 @@ class LaravelCacheAdapter implements PsrCacheInterface
     public function set($key, $value, $ttl = null): bool
     {
         try {
-            if ($ttl === null) {
-                return $this->cache->forever($key, $value);
+            if (is_int($ttl)) {
+                return $this->cache->put($key, $value, $ttl);
             }
-
-            // $ttl may be int (seconds) or DateInterval; Laravel expects seconds for put()
-            if ($ttl instanceof \DateInterval) {
-                // convert DateInterval to seconds (approx)
-                $ttl = (int) (new \DateTimeImmutable())->add($ttl)->getTimestamp() - time();
-            }
-
-            $seconds = is_int($ttl) ? $ttl : (int)$ttl;
-            return $this->cache->put($key, $value, $seconds);
-        } catch (\Throwable $e) {
+            return $this->cache->forever($key, $value);
+        } catch (\Throwable) {
             return false;
         }
     }
@@ -67,7 +54,7 @@ class LaravelCacheAdapter implements PsrCacheInterface
     {
         try {
             return $this->cache->forget($key);
-        } catch (\Throwable $e) {
+        } catch (\Throwable) {
             return false;
         }
     }
@@ -79,7 +66,7 @@ class LaravelCacheAdapter implements PsrCacheInterface
     {
         try {
             return $this->cache->flush();
-        } catch (\Throwable $e) {
+        } catch (\Throwable) {
             return false;
         }
     }
@@ -89,11 +76,11 @@ class LaravelCacheAdapter implements PsrCacheInterface
      */
     public function getMultiple($keys, $default = null): iterable
     {
-        $result = [];
-        foreach ($keys as $key) {
-            $result[$key] = $this->get($key, $default);
+        $out = [];
+        foreach ($keys as $k) {
+            $out[$k] = $this->get($k, $default);
         }
-        return $result;
+        return $out;
     }
 
     /**
@@ -101,14 +88,10 @@ class LaravelCacheAdapter implements PsrCacheInterface
      */
     public function setMultiple($values, $ttl = null): bool
     {
-        try {
-            foreach ($values as $key => $value) {
-                $this->set($key, $value, $ttl);
-            }
-            return true;
-        } catch (\Throwable $e) {
-            return false;
+        foreach ($values as $k => $v) {
+            $this->set($k, $v, $ttl);
         }
+        return true;
     }
 
     /**
@@ -116,14 +99,10 @@ class LaravelCacheAdapter implements PsrCacheInterface
      */
     public function deleteMultiple($keys): bool
     {
-        try {
-            foreach ($keys as $key) {
-                $this->delete($key);
-            }
-            return true;
-        } catch (\Throwable $e) {
-            return false;
+        foreach ($keys as $k) {
+            $this->delete($k);
         }
+        return true;
     }
 
     /**
@@ -133,7 +112,7 @@ class LaravelCacheAdapter implements PsrCacheInterface
     {
         try {
             return $this->cache->has($key);
-        } catch (\Throwable $e) {
+        } catch (\Throwable) {
             return false;
         }
     }

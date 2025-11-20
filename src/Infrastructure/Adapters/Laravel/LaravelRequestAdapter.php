@@ -1,37 +1,45 @@
 <?php
-namespace LanguageDetector\Adapters\Laravel;
-/**
- * LaravelRequestAdapter.php
- * This file is part of LanguageDetector package.
- * (c) Oleksandr Nosov <alex@4n.com.ua>
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- * @license MIT
- * @package LanguageDetector\Adapters\Laravel
- * @author  Oleksandr Nosov <alex@4n.com.ua>
- */
-use LanguageDetector\Domain\Contracts\RequestInterface as CoreRequestInterface;
-use Illuminate\Http\Request as LaravelRequest;
+declare(strict_types=1);
 
-class LaravelRequestAdapter implements CoreRequestInterface
+namespace LanguageDetector\Infrastructure\Adapters\Laravel;
+/**
+ * Adapter for Illuminate\Http\Request -> RequestInterface
+ *
+ * @license MIT
+ * @package LanguageDetector\Infrastructure\Adapters\Laravel
+ * @author  Oleksandr Nosov <alex@4n.com.ua>
+ * @copyright 2025 Oleksandr Nosov
+ */
+use Illuminate\Http\Request;
+use LanguageDetector\Domain\Contracts\RequestInterface;
+
+class LaravelRequestAdapter implements RequestInterface
 {
     /**
-     * @param LaravelRequest $request
+     * Constructor
+     * @param Request $request Laravel HTTP request instance
      */
     public function __construct(
-        private LaravelRequest $request,
+        private Request $request
     ) {}
 
     /**
-     * @inheritDoc
+     * Determine if running in console mode.
+     * @return bool
      */
     public function isConsole(): bool
     {
-        return app()->runningInConsole();
+        try {
+            return app()->runningInConsole();
+        } catch (\Throwable) {
+            return false;
+        }
     }
 
     /**
-     * @inheritDoc
+     * Get a query parameter from GET request.
+     * @param string $name Parameter name
+     * @return mixed|null Parameter value or null if not present
      */
     public function get(string $name): mixed
     {
@@ -39,7 +47,9 @@ class LaravelRequestAdapter implements CoreRequestInterface
     }
 
     /**
-     * @inheritDoc
+     * Get a parameter from POST request.
+     * @param string $name Parameter name
+     * @return mixed|null Parameter value or null if not present
      */
     public function post(string $name): mixed
     {
@@ -47,7 +57,9 @@ class LaravelRequestAdapter implements CoreRequestInterface
     }
 
     /**
-     * @inheritDoc
+     * Determine if a header is present.
+     * @param string $name Header name
+     * @return bool
      */
     public function hasHeader(string $name): bool
     {
@@ -55,17 +67,19 @@ class LaravelRequestAdapter implements CoreRequestInterface
     }
 
     /**
-     * @inheritDoc
+     * Get a header value.
+     * @param string $name Header name
+     * @return mixed|null Header value or null if not present
      */
     public function getHeader(string $name): mixed
     {
-        // return header value (string or array)
-        $value = $this->request->header($name);
-        return $value !== null ? $value : null;
+        return $this->request->headers->get($name);
     }
 
     /**
-     * @inheritDoc
+     * Determine if a cookie is present.
+     * @param string $name Cookie name
+     * @return bool
      */
     public function hasCookie(string $name): bool
     {
@@ -73,7 +87,9 @@ class LaravelRequestAdapter implements CoreRequestInterface
     }
 
     /**
-     * @inheritDoc
+     * Get a cookie value.
+     * @param string $name Cookie name
+     * @return mixed|null Cookie value or null if not present
      */
     public function getCookie(string $name): mixed
     {
@@ -81,21 +97,59 @@ class LaravelRequestAdapter implements CoreRequestInterface
     }
 
     /**
-     * @inheritDoc
+     * Determine if session is available.
+     * @return bool
      */
     public function hasSession(): bool
     {
-        return $this->request->hasSession() && $this->request->session() !== null;
+        try {
+            return $this->request->hasSession() && $this->request->session()->isStarted();
+        } catch (\Throwable) {
+            return false;
+        }
     }
 
     /**
-     * @inheritDoc
+     * Get a session value.
+     * @param string $name Session key name
+     * @return mixed|null Session value or null if not present
      */
     public function getSession(string $name): mixed
     {
-        if (! $this->hasSession()) {
+        try {
+            return $this->request->session()->get($name, null);
+        } catch (\Throwable) {
             return null;
         }
-        return $this->request->session()->get($name, null);
+    }
+
+    /**
+     * Set a session value.
+     * @param string $name Session key name
+     * @param mixed $value Value to set
+     * @return void
+     */
+    public function setSession(string $name, $value): void
+    {
+        try {
+            $this->request->session()->put($name, $value);
+        } catch (\Throwable) {
+            // ignore
+        }
+    }
+
+    /**
+     * Get the request path.
+     * @return string|null Request path or null on error
+     */
+    public function getPath(): ?string
+    {
+        try {
+            $path = $this->request->path(); // returns '' for root
+            $normalized = trim((string)$path, "/ \t\n\r\0\x0B");
+            return $normalized !== '' ? $normalized : null;
+        } catch (\Throwable) {
+            return null;
+        }
     }
 }

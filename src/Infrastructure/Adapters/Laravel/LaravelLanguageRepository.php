@@ -1,39 +1,59 @@
 <?php
-namespace LanguageDetector\Adapters\Laravel;
+declare(strict_types=1);
+
+namespace LanguageDetector\Infrastructure\Adapters\Laravel;
 /**
- * LaravelLanguageRepository.php
- * This file is part of LanguageDetector package.
- * (c) Oleksandr Nosov <alex@4n.com.ua>
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
+ * Language repository using Laravel DB/Query Builder
+ * implements LanguageRepositoryInterface.
+ * Fetches enabled language codes from database.
+ * Assumes a table with language codes and enabled flag.
+ *
  * @license MIT
- * @package LanguageDetector\Adapters\Laravel
+ * @package LanguageDetector\Infrastructure\Adapters\Laravel
  * @author  Oleksandr Nosov <alex@4n.com.ua>
+ * @copyright 2025 Oleksandr Nosov
  */
+use Illuminate\Database\ConnectionInterface;
 use LanguageDetector\Domain\Contracts\LanguageRepositoryInterface;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Str;
 
 class LaravelLanguageRepository implements LanguageRepositoryInterface
 {
     /**
-     * @param string|object $model Class name of Eloquent model or model instance.
+     * Constructor
+     * @param ConnectionInterface $db Laravel database connection
+     * @param string $table Table name containing languages
+     * @param string $codeField Field name for language code
+     * @param string $enabledField Field name for enabled flag
+     * @param string $orderField Field name for ordering
      */
     public function __construct(
-        private $model
+        private ConnectionInterface $db,
+        private string $table = 'language',
+        private string $codeField = 'code',
+        private string $enabledField = 'is_enabled',
+        private string $orderField = 'order',
     ) {}
 
     /**
-     * @inheritDoc
+     * Get enabled language codes from database.
+     * @return string[] Array of enabled language codes
      */
     public function getEnabledLanguageCodes(): array
     {
         try {
-            $queryable = is_string($this->model) ? ($this->model)::query() : $this->model->newQuery();
-            $rows = $queryable->where('is_active', 1)->pluck('code')->all();
-            $codes = array_map(fn($c) => Str::lower(substr((string)$c, 0, 2)), $rows);
-            return array_values(array_filter(array_unique($codes), fn($v) => $v !== ''));
-        } catch (\Throwable $e) {
+            $rows = $this->db->table($this->table)
+                ->select($this->codeField)
+                ->where($this->enabledField, 1)
+                ->orderBy($this->orderField, 'asc')
+                ->get();
+
+            $codes = [];
+            foreach ($rows as $r) {
+                // row may be stdClass
+                $codes[] = (string)($r->{$this->codeField} ?? '');
+            }
+            return array_values(array_filter($codes, fn($v) => $v !== ''));
+        } catch (\Throwable) {
             return [];
         }
     }
