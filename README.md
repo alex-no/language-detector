@@ -22,6 +22,14 @@ with adapters for **Yii 2** and **Laravel**.
 - Works in both web and API contexts
 - Easily extensible for any framework via adapters
 
+Starting from version 1.1.3, the package follows a clean DDD-inspired structure:
+
+- **Domain** — interfaces, entities, and pure business logic.
+- **Application** — orchestrates domain services (e.g., LanguageDetector).
+- **Infrastructure** — framework adapters, repositories, cache, request/response bridges.
+
+This makes the library framework-agnostic and easy to extend.
+
 ---
 
 ## ⚙️ Installation
@@ -57,6 +65,7 @@ Register the "component" and the "bootstrap" in config/web.php:
 'components' => [
     'languageBootstrap' => [
         'class' => \LanguageDetector\Infrastructure\Adapters\Yii2\Bootstrap::class,
+        'detectorClass' => \LanguageDetector\Application\LanguageDetector::class,
         'paramName' => 'lang',
         'default' => 'en',
         'userAttribute' => 'language_code',
@@ -92,7 +101,7 @@ Add this line to the providers array in config/app.php
 
 ```php
 'providers' => [
-    LanguageDetector\Adapters\Laravel\LaravelServiceProvider::class,
+    LanguageDetector\Infrastructure\Adapters\Laravel\LaravelServiceProvider::class,
 ],
 ```
 
@@ -208,40 +217,66 @@ composer test
 
 ```css
 language-detector/
-├── src/
-│   ├── Core/
-│   │   ├── LanguageDetector.php
+│   src/
+│   ├── Application/
+│   │   └── LanguageDetector.php
+│   ├── Domain/
 │   │   ├── Contracts/
-│   │   │   ├── LanguageRepositoryInterface.php
-│   │   │   ├── RequestInterface.php
+│   │   │   ├── RequestInterface.php            // namespace LanguageDetector\Domain\Contracts
 │   │   │   ├── ResponseInterface.php
 │   │   │   ├── UserInterface.php
-│   │   │   └── AuthenticatorInterface.php
-│   │   └── Extractor.php
-│   └── Adapters/
-│       ├── Yii2/
-│       │   ├── Bootstrap.php
-│       │   ├── YiiCacheAdapter.php
-│       │   ├── YiiLanguageRepository.php
-│       │   ├── YiiRequestAdapter.php
-│       │   ├── YiiResponseAdapter.php
-│       │   ├── YiiUserAdapter.php
-│       └── Laravel/
-│           ├── LanguageServiceProvider.php
-│           ├── EloquentLanguageRepository.php
-│           ├── LaravelCacheAdapter.php
-│           ├── LaravelLanguageRepository.php
-│           ├── LaravelMiddleware.php
-│           ├── LaravelRequestAdapter.php
-│           ├── LaravelResponseAdapter.php
-│           └── LaravelUserAdapter.php
-├──tests/
-│  └── LanguageDetectorTest.php
+│   │   │   ├── SourceInterface.php
+│   │   │   ├── LanguageRepositoryInterface.php
+│   │   │   └── EventDispatcherInterface.php
+│   │   ├── Events/
+│   │   │   └── LanguageChangedEvent.php        // namespace LanguageDetector\Domain\Events
+│   │   └── Sources/
+│   │       ├── PathSource.php                  // namespace LanguageDetector\Domain\Sources
+│   │       ├── PostSource.php
+│   │       ├── GetSource.php
+│   │       ├── UserProfileSource.php
+│   │       ├── SessionSource.php
+│   │       ├── CookieSource.php
+│   │       ├── HeaderSource.php
+│   │       └── DefaultSource.php
+│   └── Infrastructure/
+│       └── Adapters/
+│           ├── Yii2/
+│           │   ├── Bootstrap.php
+│           │   ├── YiiRequestAdapter.php               // implements LanguageDetector\Domain\Contracts\RequestInterface
+│           │   ├── YiiResponseAdapter.php              // implements ResponseInterface
+│           │   ├── YiiUserAdapter.php                  // implements UserInterface
+│           │   ├── YiiCacheAdapter.php                 // implements CacheInterface
+│           │   ├── YiiLanguageRepository.php           // implements LanguageRepositoryInterface
+│           │   └── YiiEventDispatcher.php              // implements EventDispatcherInterface
+│           ├── Symfony/
+│           │   ├── RequestListener.php
+│           │   ├── SymfonyRequestAdapter.php           // implements LanguageDetector\Domain\Contracts\RequestInterface
+│           │   ├── SymfonyResponseAdapter.php          // implements ResponseInterface
+│           │   ├── SymfonyUserAdapter.php              // implements UserInterface
+│           │   ├── SymfonyCacheAdapter.php             // implements CacheInterface
+│           │   ├── SymfonyLanguageRepository.php       // implements LanguageRepositoryInterface
+│           │   └── SymfonyEventDispatcher.php          // implements EventDispatcherInterface
+│           └── Laravel/
+│               ├── Bootstrap.php
+│               ├── LanguageDetectorServiceProvider.php // implements LanguageDetector\Domain\Contracts\RequestInterface
+│               ├── LaravelResponseAdapter.php          // implements ResponseInterface
+│               ├── LaravelUserAdapter.php              // implements UserInterface
+│               ├── LaravelCacheAdapter.php             // implements CacheInterface
+│               ├── LaravelLanguageRepository.php       // implements LanguageRepositoryInterface
+│               └── LaravelEventDispatcher.php          // implements EventDispatcherInterface
+├── tests
+│   └── TestLanguageDetector.php
 composer test
 composer.json
 phpunit.xml.dist
 LICENSE
 ```
+
+### 🧩 Application Layer
+
+The `Application\LanguageDetector` class coordinates all domain services and acts as the high-level entry point for detecting language.  
+It does not depend on framework-specific code and uses interfaces from the Domain layer.
 
 ## 🧰 Example test
 
@@ -253,7 +288,7 @@ A minimal test file tests/LanguageDetectorTest.php:
 declare(strict_types=1);
 
 use PHPUnit\Framework\TestCase;
-use LanguageDetector\LanguageDetector;
+use LanguageDetector\Application\LanguageDetector;
 
 final class LanguageDetectorTest extends TestCase
 {
