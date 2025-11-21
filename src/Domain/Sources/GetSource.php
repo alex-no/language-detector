@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace LanguageDetector\Domain\Sources;
 /**
  * GetSource.php
+ * GetSource - extracts language from GET parameter
  * This file is part of LanguageDetector package.
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
@@ -17,23 +18,27 @@ use LanguageDetector\Domain\Contracts\SourceInterface;
 use LanguageDetector\Domain\Contracts\RequestInterface;
 use LanguageDetector\Domain\Contracts\UserInterface;
 
-/**
- * GetSource - extracts language from GET parameter
- */
 class GetSource implements SourceInterface
 {
-    private string $param;
+    /**
+     * GetSource constructor.
+     * @param string $param GET parameter name to read language from
+     */
+    public function __construct(
+        private string $param = 'lang'
+    ) {}
 
-    public function __construct(string $param = 'lang')
-    {
-        $this->param = $param;
-    }
-
+    /**
+     * @inheritDoc
+     */
     public function getKey(): string
     {
         return 'get';
     }
 
+    /**
+     * @inheritDoc
+     */
     public function getLanguage(RequestInterface $request, ?UserInterface $user, bool $isApi): ?string
     {
         try {

@@ -20,18 +20,25 @@ use LanguageDetector\Domain\Contracts\UserInterface;
 
 class HeaderSource implements SourceInterface
 {
-    private string $headerName;
+    /**
+     * HeaderSource constructor.
+     * @param string $headerName Header name to read language from
+     */
+    public function __construct(
+        private string $headerName = 'Accept-Language'
+    ) {}
 
-    public function __construct(string $headerName = 'Accept-Language')
-    {
-        $this->headerName = $headerName;
-    }
-
+    /**
+     * @inheritDoc
+     */
     public function getKey(): string
     {
         return 'header';
     }
 
+    /**
+     * @inheritDoc
+     */
     public function getLanguage(RequestInterface $request, ?UserInterface $user, bool $isApi): ?string
     {
         try {

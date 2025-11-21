@@ -24,6 +24,7 @@ use LanguageDetector\Domain\Sources\CookieSource;
 use LanguageDetector\Domain\Sources\HeaderSource;
 use LanguageDetector\Domain\Sources\DefaultSource;
 use yii\base\BootstrapInterface;
+use Yii;
 
 /**
  * Yii2 Bootstrap component for LanguageDetector.
@@ -42,10 +43,18 @@ use yii\base\BootstrapInterface;
  */
 class Bootstrap implements BootstrapInterface
 {
+    /**
+     * @var string $paramName GET/POST/Cookie/Session/UserProfile parameter name to read language from
+     * @var string $default Default language code
+     * @var int $pathSegmentIndex Index of the path segment to read language from (
+     */
     public string $paramName = 'lang';
     public string $default = 'en';
     public int $pathSegmentIndex = 0;
 
+    /**
+     * @inheritDoc
+     */
     public function bootstrap($app): void
     {
         try {
@@ -85,7 +94,7 @@ class Bootstrap implements BootstrapInterface
 
             // Apply detected language
             $lang = $detector->detect(false);
-            \Yii::$app->language = $lang;
+            Yii::$app->language = $lang;
 
             // Optionally expose detector to application for manual usage
             $app->set('languageDetector', $detector);

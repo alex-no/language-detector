@@ -20,18 +20,25 @@ use LanguageDetector\Domain\Contracts\UserInterface;
 
 class UserProfileSource implements SourceInterface
 {
-    private string $attribute;
+    /**
+     * UserProfileSource constructor.
+     * @param string $attribute User attribute name to read language from
+     */
+    public function __construct(
+        private string $attribute = 'language_code'
+    ) {}
 
-    public function __construct(string $attribute = 'language_code')
-    {
-        $this->attribute = $attribute;
-    }
-
+    /**
+     * @inheritDoc
+     */
     public function getKey(): string
     {
         return 'user';
     }
 
+    /**
+     * @inheritDoc
+     */
     public function getLanguage(RequestInterface $request, ?UserInterface $user, bool $isApi): ?string
     {
         try {

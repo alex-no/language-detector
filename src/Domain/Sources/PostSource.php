@@ -13,7 +13,6 @@ namespace LanguageDetector\Domain\Sources;
  * @package LanguageDetector\Domain\Contracts
  * @author  Oleksandr Nosov <alex@4n.com.ua>
  * @copyright 2025 Oleksandr Nosov
- *
  */
 use LanguageDetector\Domain\Contracts\SourceInterface;
 use LanguageDetector\Domain\Contracts\RequestInterface;
@@ -21,18 +20,25 @@ use LanguageDetector\Domain\Contracts\UserInterface;
 
 class PostSource implements SourceInterface
 {
-    private string $param;
+    /**
+     * PostSource constructor.
+     * @param string $param POST parameter name to read language from
+     */
+    public function __construct(
+        private string $param = 'lang'
+    ) {}
 
-    public function __construct(string $param = 'lang')
-    {
-        $this->param = $param;
-    }
-
+    /**
+     * @inheritDoc
+     */
     public function getKey(): string
     {
         return 'post';
     }
 
+    /**
+     * @inheritDoc
+     */
     public function getLanguage(RequestInterface $request, ?UserInterface $user, bool $isApi): ?string
     {
         try {

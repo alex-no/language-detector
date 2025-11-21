@@ -20,18 +20,25 @@ use LanguageDetector\Domain\Contracts\UserInterface;
 
 class PathSource implements SourceInterface
 {
-    private int $index;
+    /**
+     * PathSource constructor.
+     * @param int $index Path segment index to read language from (0-based)
+     */
+    public function __construct(
+        private int $index = 0
+    ) {}
 
-    public function __construct(int $index = 0)
-    {
-        $this->index = $index;
-    }
-
+    /**
+     * @inheritDoc
+     */
     public function getKey(): string
     {
         return 'path';
     }
 
+    /**
+     * @inheritDoc
+     */
     public function getLanguage(RequestInterface $request, ?UserInterface $user, bool $isApi): ?string
     {
         try {

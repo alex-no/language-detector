@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace LanguageDetector\Domain\Sources;
 /**
  * CookieSource.php
+ * CookieSource - reads language from cookie
  * This file is part of LanguageDetector package.
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
@@ -17,23 +18,27 @@ use LanguageDetector\Domain\Contracts\SourceInterface;
 use LanguageDetector\Domain\Contracts\RequestInterface;
 use LanguageDetector\Domain\Contracts\UserInterface;
 
-/**
- * CookieSource - reads language from cookie
- */
 class CookieSource implements SourceInterface
 {
-    private string $param;
+    /**
+     * CookieSource constructor.
+     * @param string $param Cookie name to read language from
+     */
+    public function __construct(
+        private string $param = 'lang'
+    ) {}
 
-    public function __construct(string $param = 'lang')
-    {
-        $this->param = $param;
-    }
-
+    /**
+     * @inheritDoc
+     */
     public function getKey(): string
     {
         return 'cookie';
     }
 
+    /**
+     * @inheritDoc
+     */
     public function getLanguage(RequestInterface $request, ?UserInterface $user, bool $isApi): ?string
     {
         if ($isApi) {

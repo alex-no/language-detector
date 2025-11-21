@@ -20,18 +20,25 @@ use LanguageDetector\Domain\Contracts\UserInterface;
 
 class SessionSource implements SourceInterface
 {
-    private string $param;
+    /**
+     * SessionSource constructor.
+     * @param string $param Session key name to read language from
+     */
+    public function __construct(
+        private string $param = 'lang'
+    ) {}
 
-    public function __construct(string $param = 'lang')
-    {
-        $this->param = $param;
-    }
-
+    /**
+     * @inheritDoc
+     */
     public function getKey(): string
     {
         return 'session';
     }
 
+    /**
+     * @inheritDoc
+     */
     public function getLanguage(RequestInterface $request, ?UserInterface $user, bool $isApi): ?string
     {
         if ($isApi) {

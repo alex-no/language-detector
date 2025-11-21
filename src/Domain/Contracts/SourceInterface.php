@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace LanguageDetector\Domain\Contracts;
 /**
  * SourceInterface.php
+ * SourceInterface - contract for language sources
  * This file is part of LanguageDetector package.
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
@@ -19,11 +20,6 @@ namespace LanguageDetector\Domain\Contracts;
 use LanguageDetector\Domain\Contracts\RequestInterface;
 use LanguageDetector\Domain\Contracts\UserInterface;
 
-/**
- * SourceInterface
- *
- *
- */
 interface SourceInterface
 {
     /**
