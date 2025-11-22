@@ -30,3 +30,4 @@ yarn.lock
 /release_tag.bat
 /src/install.cmd
 /.claude
+/nul

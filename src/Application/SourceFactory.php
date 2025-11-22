@@ -14,7 +14,8 @@ class SourceFactory
     const HEADER_KEY = 'Accept-Language';
     /**
      * @param array $config Configuration options:
-     *                      - paramName: string Parameter name for sources (default: 'lang')
+     *                      - paramName: string Parameter name for GET/POST/Cookie/Session (default: 'lang')
+     *                      - userAttribute: string User DB field name for language (default: 'language_code')
      *                      - default: string Default language code (default: 'en')
      *                      - pathSegmentIndex: int Index of path segment for PathSource (default: 0)
      */
@@ -27,11 +28,12 @@ class SourceFactory
     private function getMap(): array
     {
         $paramName = $this->config['paramName'] ?? 'lang';
+        $userAttribute = $this->config['userAttribute'] ?? 'language_code';
         return [
             'post'    => fn() => new PostSource($paramName),
             'get'     => fn() => new GetSource($paramName),
             'path'    => fn() => new PathSource($this->config['pathSegmentIndex'] ?? 0),
-            'user'    => fn() => new UserProfileSource($paramName),
+            'user'    => fn() => new UserProfileSource($userAttribute),
             'session' => fn() => new SessionSource($paramName),
             'cookie'  => fn() => new CookieSource($paramName),
             'header'  => fn() => new HeaderSource(self::HEADER_KEY),

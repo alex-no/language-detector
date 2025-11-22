@@ -22,7 +22,8 @@ with adapters for **Yii 2**, **Laravel**, and **Symfony**.
   8. Default language fallback
 - **Customizable source order** — you can define which sources to use and in what order via `sourceKeys` configuration
 - **Database-backed language list** — caches allowed languages from database with configurable TTL
-- **Language persistence** — automatically saves detected language to session, cookie, and user profile
+- **Language persistence** — automatically saves detected language to session, cookie, and user profile (DB)
+- **Separate configuration** — independent `paramName` (for GET/POST/Cookie/Session) and `userAttribute` (for DB field name)
 - **API mode support** — works in both web and API contexts (API mode skips session/cookie)
 - **Framework-agnostic** — clean DDD architecture with adapters for Yii 2, Laravel, and Symfony
 - **Event system** — dispatches `LanguageChangedEvent` when user's language changes
@@ -72,6 +73,7 @@ Register the bootstrap component in `config/web.php`:
     'languageBootstrap' => [
         'class' => \LanguageDetector\Infrastructure\Adapters\Yii2\Bootstrap::class,
         'paramName' => 'lang',              // GET/POST/Cookie/Session parameter name
+        'userAttribute' => 'language_code', // User DB field name for storing language
         'default' => 'en',                  // Default language code
         'pathSegmentIndex' => 0,            // URL path segment index (0 = first segment)
     ],
@@ -100,6 +102,7 @@ You can customize the detection order by passing `sourceKeys` in the configurati
 'languageBootstrap' => [
     'class' => \LanguageDetector\Infrastructure\Adapters\Yii2\Bootstrap::class,
     'paramName' => 'lang',
+    'userAttribute' => 'language_code',
     'default' => 'en',
     'pathSegmentIndex' => 0,
     // Custom order: only check GET parameter and Accept-Language header
@@ -157,6 +160,7 @@ use LanguageDetector\Infrastructure\Adapters\Laravel\LanguageDetectorServiceProv
 class CustomLanguageServiceProvider extends LanguageDetectorServiceProvider
 {
     public string $paramName = 'lang';
+    public string $userAttribute = 'language_code';  // User DB field name
     public string $default = 'en';
     public int $pathSegmentIndex = 0;  // URL path segment index
 }
@@ -231,6 +235,7 @@ services:
             $connection: '@doctrine.dbal.default_connection'
             $config:
                 paramName: 'lang'
+                userAttribute: 'language_code'
                 default: 'en'
                 pathSegmentIndex: 0
 
@@ -241,6 +246,7 @@ services:
             $sourceKeys: null  # Use default order, or customize: ['get', 'header', 'default']
             $config:
                 paramName: 'lang'
+                userAttribute: 'language_code'
                 default: 'en'
                 pathSegmentIndex: 0
 

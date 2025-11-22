@@ -39,6 +39,7 @@ class LanguageDetector
 
     private string $paramName;
     private string $default;
+    private string $userAttribute;
     private string $cacheKey;
     private int $cacheTtl;
     private int $pathSegmentIndex;
@@ -48,12 +49,12 @@ class LanguageDetector
     private CacheInterface $cache;
 
     private const DEFAULT_CONFIG = [
-        'paramName'        => 'lang',              // GET/POST param name
+        'paramName'        => 'lang',              // GET/POST/Cookie/Session param name
         'default'          => 'en',                // default language code
+        'userAttribute'    => 'language_code',     // user profile attribute name (DB field)
         'cacheKey'         => 'allowed_languages', // cache key for allowed languages
         'cacheTtl'         => 3600,                // seconds
         'pathSegmentIndex' => 0,                   // which path segment to consider for language code, default 0
-        //'userAttribute'    => 'language_code',     // user profile attribute name
     ];
     private const DEFAULT_SOURCE_KEYS = [
         'post',
@@ -154,10 +155,10 @@ class LanguageDetector
         if ($this->user?->isGuest() === false) {
             // set user language via adapters
             try {
-                $old = (string)$this->user->getAttribute($this->paramName);
+                $old = (string)$this->user->getAttribute($this->userAttribute);
                 if ($old !== $lang) {
-                    $this->user->setAttribute($this->paramName, $lang);
-                    $this->user->saveAttributes([$this->paramName]);
+                    $this->user->setAttribute($this->userAttribute, $lang);
+                    $this->user->saveAttributes([$this->userAttribute]);
                     $dispatcher = $this->context->getEventDispatcher();
                     if ($dispatcher) {
                         try {

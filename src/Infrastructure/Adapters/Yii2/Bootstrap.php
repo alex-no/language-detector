@@ -28,7 +28,8 @@ use Yii;
  * 'components' => [
  *     'languageBootstrap' => [
  *         'class' => \LanguageDetector\Infrastructure\Adapters\Yii2\Bootstrap::class,
- *         'paramName' => 'lang',
+ *         'paramName' => 'lang',              // GET/POST/Cookie/Session parameter
+ *         'userAttribute' => 'language_code', // User DB field name
  *         'default' => 'en',
  *         'pathSegmentIndex' => 0,
  *         // 'sourceKeys' => ['get', 'header', 'default'], // Optional: custom source order
@@ -38,12 +39,14 @@ use Yii;
 class Bootstrap implements BootstrapInterface
 {
     /**
-     * @var string $paramName GET/POST/Cookie/Session/UserProfile parameter name to read language from
+     * @var string $paramName GET/POST/Cookie/Session parameter name
+     * @var string $userAttribute User DB field name for language
      * @var string $default Default language code
      * @var int $pathSegmentIndex Index of the path segment to read language from
      * @var array|null $sourceKeys Custom order of language detection sources, or null for default order
      */
     public string $paramName = 'lang';
+    public string $userAttribute = 'language_code';
     public string $default = 'en';
     public int $pathSegmentIndex = 0;
     public ?array $sourceKeys = null;
@@ -56,6 +59,7 @@ class Bootstrap implements BootstrapInterface
         try {
             $config = [
                 'paramName' => $this->paramName,
+                'userAttribute' => $this->userAttribute,
                 'default' => $this->default,
                 'pathSegmentIndex' => $this->pathSegmentIndex,
             ];

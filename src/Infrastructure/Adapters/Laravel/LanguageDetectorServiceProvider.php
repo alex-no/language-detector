@@ -17,6 +17,7 @@ use LanguageDetector\Application\LanguageDetector;
 class LanguageDetectorServiceProvider extends ServiceProvider
 {
     public string $paramName = 'lang';
+    public string $userAttribute = 'language_code';
     public string $default = 'en';
     public int $pathSegmentIndex = 0;
 
@@ -26,6 +27,7 @@ class LanguageDetectorServiceProvider extends ServiceProvider
         $this->app->singleton('languageDetector', function ($app) {
             $config = [
                 'paramName' => $this->paramName,
+                'userAttribute' => $this->userAttribute,
                 'default' => $this->default,
                 'pathSegmentIndex' => $this->pathSegmentIndex,
             ];
