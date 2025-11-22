@@ -113,8 +113,15 @@ Listen to language change events using Yii's event system:
 
 ```php
 Yii::$app->on('language.changed', function($event) {
-    // $event is an instance of LanguageChangedEvent
-    echo "Language changed from {$event->oldLanguage} to {$event->newLanguage}";
+    // $event is yii\base\Event
+    // Access the LanguageChangedEvent object via $event->data
+    $languageEvent = $event->data;
+    echo "Language changed from {$languageEvent->oldLanguage} to {$languageEvent->newLanguage}";
+
+    // Access user if available
+    if ($languageEvent->user) {
+        echo "User ID: " . $languageEvent->user->getId();
+    }
 });
 ```
 

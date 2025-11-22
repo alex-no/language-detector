@@ -32,9 +32,17 @@ class YiiEventDispatcher implements EventDispatcherInterface
      */
     public function dispatch(object $event)
     {
-        if (class_exists('\Yii')) {
+        if (class_exists('\Yii') && isset(\Yii::$app)) {
             try {
-                \Yii::$app->trigger($this->eventName, $event);
+                // Wrap the event in yii\base\Event if the class exists
+                if (class_exists('\yii\base\Event')) {
+                    $yiiEvent = new \yii\base\Event();
+                    $yiiEvent->data = $event;
+                    \Yii::$app->trigger($this->eventName, $yiiEvent);
+                } else {
+                    // Fallback: trigger with raw object
+                    \Yii::$app->trigger($this->eventName, $event);
+                }
             } catch (\Throwable) {
                 // ignore trigger errors
             }
