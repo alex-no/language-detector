@@ -21,24 +21,14 @@ namespace LanguageDetector\Application;
  * @copyright 2025 Oleksandr Nosov
  */
 // Import necessary interfaces (contracts)
-use LanguageDetector\Domain\Contracts\RequestInterface;
-use LanguageDetector\Domain\Contracts\ResponseInterface;
-use LanguageDetector\Domain\Contracts\UserInterface;
-use LanguageDetector\Domain\Contracts\LanguageRepositoryInterface;
-use LanguageDetector\Domain\Contracts\EventDispatcherInterface;
+use LanguageDetector\Domain\Contracts\FrameworkContextInterface;
 use LanguageDetector\Domain\Contracts\SourceInterface;
+use LanguageDetector\Domain\Contracts\RequestInterface;
+use LanguageDetector\Domain\Contracts\UserInterface;
 use Psr\SimpleCache\CacheInterface;
 // Import event class
 use LanguageDetector\Domain\Events\LanguageChangedEvent;
 // Import source classes (Sources)
-use LanguageDetector\Domain\Sources\PostSource;
-use LanguageDetector\Domain\Sources\GetSource;
-use LanguageDetector\Domain\Sources\PathSource;
-use LanguageDetector\Domain\Sources\UserProfileSource;
-use LanguageDetector\Domain\Sources\SessionSource;
-use LanguageDetector\Domain\Sources\CookieSource;
-use LanguageDetector\Domain\Sources\HeaderSource;
-use LanguageDetector\Domain\Sources\DefaultSource;
 
 class LanguageDetector
 {
@@ -53,6 +43,10 @@ class LanguageDetector
     private int $cacheTtl;
     private int $pathSegmentIndex;
 
+    private RequestInterface $request;
+    private UserInterface $user;
+    private CacheInterface $cache;
+
     private const DEFAULT_CONFIG = [
         'paramName'        => 'lang',              // GET/POST param name
         'default'          => 'en',                // default language code
@@ -61,62 +55,42 @@ class LanguageDetector
         'pathSegmentIndex' => 0,                   // which path segment to consider for language code, default 0
         //'userAttribute'    => 'language_code',     // user profile attribute name
     ];
+    private const DEFAULT_SOURCE_KEYS = [
+        'post',
+        'get',
+        'path',
+        'user',
+        'session',
+        'cookie',
+        'header',
+        'default',
+    ];
 
     /**
-     * @param RequestInterface $request
-     * @param ResponseInterface $response
-     * @param UserInterface|null $user
-     * @param LanguageRepositoryInterface $repo
-     * @param CacheInterface $cache
-     * @param EventDispatcherInterface|null $dispatcher
+     * @param FrameworkContextInterface $context Framework context providing request, response, user, cache, repo, dispatcher
+     * @param array|null $sourceKeys Optional array of source keys to use in order (from DEFAULT_SOURCE_KEYS), or null for default order
      * @param array $config  Optional config:
      *                      - paramName, default, cacheKey, cacheTtl, pathSegmentIndex
-     *                      - sources: array of SourceInterface instances (optional)
+     * @throws \Throwable
      */
     public function __construct(
-        private readonly RequestInterface          $request,
-        private readonly ResponseInterface         $response,
-        private readonly ?UserInterface            $user,
-        private readonly LanguageRepositoryInterface $repo,
-        private readonly CacheInterface            $cache,
-        private readonly ?EventDispatcherInterface  $dispatcher = null,
-        array $config = [],
+        private readonly FrameworkContextInterface $context,
+        ?array $sourceKeys = null,
+        array $config = []
     ) {
         foreach (self::DEFAULT_CONFIG as $k => $v) {
             $this->$k = $config[$k] ?? $v;
         }
 
-        if (!empty($config['sources']) && is_array($config['sources'])) {
-            foreach ($config['sources'] as $s) {
-                if ($s instanceof SourceInterface) {
-                    $this->sources[] = $s;
-                }
-            }
-        } else {
-            // build default sources order: POST -> GET -> PATH -> user -> session -> cookie -> header -> default
-            $this->sources = $this->buildDefaultSources();
-        }
-    }
+        $this->request = $context->getRequest();
+        $this->user    = $context->getUser();
+        $this->cache   = $context->getCache();
 
-    /**
-     * Build default Source instances using fully-qualified classes in Infrastructure.
-     *
-     * Implemented here for convenience so constructor remains simple.
-     *
-     * @return SourceInterface[]
-     */
-    protected function buildDefaultSources(): array
-    {
-        return [
-            new PostSource($this->paramName),
-            new GetSource($this->paramName),
-            new PathSource($this->pathSegmentIndex),
-            new UserProfileSource($this->paramName),
-            new SessionSource($this->paramName),
-            new CookieSource($this->paramName),
-            new HeaderSource('Accept-Language'),
-            new DefaultSource($this->default),
-        ];
+        $factory = new SourceFactory($config);
+
+        $sourceKeys ??= self::DEFAULT_SOURCE_KEYS;
+
+        $this->sources = $factory->make($sourceKeys);
     }
 
     /**
@@ -171,7 +145,7 @@ class LanguageDetector
                 if ($this->request->hasSession()) {
                     $this->request->setSession($this->paramName, $lang);
                 }
-                $this->response->addCookie($this->paramName, $lang, time() + self::COOKIE_LIFETIME);
+                $this->context->getResponse()->addCookie($this->paramName, $lang, time() + self::COOKIE_LIFETIME);
             } catch (\Throwable) {
                 // Ignore session/cookie errors
             }
@@ -184,9 +158,10 @@ class LanguageDetector
                 if ($old !== $lang) {
                     $this->user->setAttribute($this->paramName, $lang);
                     $this->user->saveAttributes([$this->paramName]);
-                    if ($this->dispatcher) {
+                    $dispatcher = $this->context->getEventDispatcher();
+                    if ($dispatcher) {
                         try {
-                            $this->dispatcher->dispatch(new LanguageChangedEvent($old, $lang, $this->user));
+                            $dispatcher->dispatch(new LanguageChangedEvent($old, $lang, $this->user));
                         } catch (\Throwable) {
                             // ignore
                         }
@@ -300,7 +275,7 @@ class LanguageDetector
     {
         try {
             // repo should return an array of codes: ['en', 'uk', ...]
-            $langs = $this->repo->getEnabledLanguageCodes();
+            $langs = $this->context->getLanguageRepository()->getEnabledLanguageCodes();
             $langs = is_array($langs) ? $langs : [];
             try {
                 $this->cache->set($this->cacheKey, $langs, $this->cacheTtl);

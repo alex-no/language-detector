@@ -15,14 +15,7 @@ namespace LanguageDetector\Infrastructure\Adapters\Yii2;
  * @copyright 2025 Oleksandr Nosov
  */
 use LanguageDetector\Application\LanguageDetector;
-use LanguageDetector\Domain\Sources\PostSource;
-use LanguageDetector\Domain\Sources\GetSource;
-use LanguageDetector\Domain\Sources\PathSource;
-use LanguageDetector\Domain\Sources\UserProfileSource;
-use LanguageDetector\Domain\Sources\SessionSource;
-use LanguageDetector\Domain\Sources\CookieSource;
-use LanguageDetector\Domain\Sources\HeaderSource;
-use LanguageDetector\Domain\Sources\DefaultSource;
+use LanguageDetector\Infrastructure\Adapters\Yii2\Yii2Context;
 use yii\base\BootstrapInterface;
 use Yii;
 
@@ -58,39 +51,17 @@ class Bootstrap implements BootstrapInterface
     public function bootstrap($app): void
     {
         try {
-            $requestAdapter = new YiiRequestAdapter($app->getRequest());
-            $responseAdapter = new YiiResponseAdapter($app->getResponse());
-            $userAdapter = new YiiUserAdapter($app->getUser()->identity ?? null);
-            $repo = new YiiLanguageRepository($app->getDb());
-            $cache = new YiiCacheAdapter($app->cache);
-            $dispatcher = new YiiEventDispatcher('language.changed');
-
-            // Build sources in default order. If you want to change order, create a custom list and pass to detector.
-            $sources = [
-                new PostSource($this->paramName),
-                new GetSource($this->paramName),
-                new PathSource($this->pathSegmentIndex),
-                new UserProfileSource($this->paramName),
-                new SessionSource($this->paramName),
-                new CookieSource($this->paramName),
-                new HeaderSource('Accept-Language'),
-                new DefaultSource($this->default),
+            $config = [
+                'paramName' => $this->paramName,
+                'default' => $this->default,
+                'pathSegmentIndex' => $this->pathSegmentIndex,
+                // 'sourceKeys' => ['get', 'header'], // только GET + Header
             ];
 
-            $detector = new LanguageDetector(
-                $requestAdapter,
-                $responseAdapter,
-                $userAdapter,
-                $repo,
-                $cache,
-                $dispatcher,
-                [
-                    'paramName' => $this->paramName,
-                    'default' => $this->default,
-                    'pathSegmentIndex' => $this->pathSegmentIndex,
-                    'sources' => $sources,
-                ]
-            );
+            $context = new Yii2Context($config);
+
+            $detector = new LanguageDetector($context, $config['sourceKeys'] ?? null, $config);
+
 
             // Apply detected language
             $lang = $detector->detect(false);
