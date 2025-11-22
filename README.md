@@ -5,34 +5,36 @@
 [![PHP Version](https://img.shields.io/packagist/php-v/alex-no/language-detector)](https://www.php.net/)
 [![Downloads](https://img.shields.io/packagist/dt/alex-no/language-detector.svg)](https://packagist.org/packages/alex-no/language-detector)
 
-A framework-agnostic language detection library for PHP 8.0+  
-with adapters for **Yii 2** and **Laravel**.
+A framework-agnostic language detection library for PHP 8.0+
+with adapters for **Yii 2**, **Laravel**, and **Symfony**.
 
 ---
 
 ## ✨ Features
-- Detects language from multiple sources (default priority):
-  1. "POST"
-  2. "GET"
-  3. "URL Path"
-  4. "Authenticated User Profile"
-  5. "Session"
-  6. "Cookie"
-  7. "Accept-Language header"
-  8. "Default language"
-Order can be customized via configuration.
-- Caches allowed languages from the database
-- Can persist language to session, cookie, and user profile
-- Works in both web and API contexts
-- Easily extensible for any framework via adapters
+- **Multi-source language detection** with customizable priority (default order):
+  1. POST parameter
+  2. GET parameter
+  3. URL Path segment
+  4. Authenticated User Profile
+  5. Session
+  6. Cookie
+  7. Accept-Language header
+  8. Default language fallback
+- **Customizable source order** — you can define which sources to use and in what order via `sourceKeys` configuration
+- **Database-backed language list** — caches allowed languages from database with configurable TTL
+- **Language persistence** — automatically saves detected language to session, cookie, and user profile
+- **API mode support** — works in both web and API contexts (API mode skips session/cookie)
+- **Framework-agnostic** — clean DDD architecture with adapters for Yii 2, Laravel, and Symfony
+- **Event system** — dispatches `LanguageChangedEvent` when user's language changes
+- **Type-safe** — full PHP 8.0+ strict typing throughout
 
 Starting from version 1.1.3, the package follows a clean DDD-inspired structure:
 
-- **Domain** — interfaces, entities, and pure business logic.
-- **Application** — orchestrates domain services (e.g., LanguageDetector).
+- **Domain** — interfaces (contracts), events, and pure business logic (Sources).
+- **Application** — orchestrates domain services (e.g., LanguageDetector, SourceFactory).
 - **Infrastructure** — framework adapters, repositories, cache, request/response bridges.
 
-This makes the library framework-agnostic and easy to extend.
+Each framework adapter implements `FrameworkContextInterface` which provides access to all framework-specific services (request, response, user, cache, repository, event dispatcher). This makes the library framework-agnostic and easy to extend.
 
 ---
 
@@ -60,7 +62,7 @@ The event object exposes three public properties:
 
 ## 🚀 Usage in Yii 2
 
-Register the "component" and the "bootstrap" in config/web.php:
+Register the bootstrap component in `config/web.php`:
 
 ```php
 'bootstrap' => [
@@ -69,49 +71,93 @@ Register the "component" and the "bootstrap" in config/web.php:
 'components' => [
     'languageBootstrap' => [
         'class' => \LanguageDetector\Infrastructure\Adapters\Yii2\Bootstrap::class,
-        'detectorClass' => \LanguageDetector\Application\LanguageDetector::class,
-        'paramName' => 'lang',
-        'default' => 'en',
-        'userAttribute' => 'language_code',
-        'tableName' => 'language',
-        'codeField' => 'code',
-        'enabledField' => 'is_enabled',
-        'pathSegmentIndex' => 1,
+        'paramName' => 'lang',              // GET/POST/Cookie/Session parameter name
+        'default' => 'en',                  // Default language code
+        'pathSegmentIndex' => 0,            // URL path segment index (0 = first segment)
     ],
 ],
 ```
 
-The component will:
- - Checks for a lang parameter in URL or POST data.
- - If not found, reads language from the authenticated user profile.
- - If still not found, reads from session or cookie.
- - Falls back to browser’s Accept-Language.
- - Updates Yii::$app->language accordingly.
+The bootstrap component will:
+- Automatically detect language on each request
+- Check sources in priority order: POST → GET → Path → User → Session → Cookie → Header → Default
+- Update `Yii::$app->language` accordingly
+- Persist language to session, cookie, and user profile
 
-You can also call it manually:
+**Manual usage:**
+
 ```php
-Yii::$app->languageBootstrap->apply();
+// Access detector manually
+$detector = Yii::$app->languageDetector;
+$lang = $detector->detect();
 ```
 
- - You can then attach a listener via `Yii::$app->on('language.changed', function($event) { ... })`.
- - The event provides `$event->oldLanguage`, `$event->newLanguage`, and `$event->user`.
- - **Note:** The language change event is currently dispatched **only for authenticated users**.
+**Custom source order:**
 
-## 🚀 Usage in Laravel
-
-Register the Service Provider
-Add this line to the providers array in config/app.php
-(if not auto-discovered):
+You can customize the detection order by passing `sourceKeys` in the configuration:
 
 ```php
-'providers' => [
-    LanguageDetector\Infrastructure\Adapters\Laravel\LaravelServiceProvider::class,
+'languageBootstrap' => [
+    'class' => \LanguageDetector\Infrastructure\Adapters\Yii2\Bootstrap::class,
+    'paramName' => 'lang',
+    'default' => 'en',
+    'pathSegmentIndex' => 0,
+    // Custom order: only check GET parameter and Accept-Language header
+    'sourceKeys' => ['get', 'header', 'default'],
 ],
 ```
 
-Register the Middleware
+**Event handling:**
 
-Add to app/Http/Kernel.php:
+Listen to language change events using Yii's event system:
+
+```php
+Yii::$app->on('language.changed', function($event) {
+    // $event is an instance of LanguageChangedEvent
+    echo "Language changed from {$event->oldLanguage} to {$event->newLanguage}";
+});
+```
+
+**Note:** The language change event is currently dispatched **only for authenticated users**.
+
+## 🚀 Usage in Laravel
+
+**1. Register the Service Provider**
+
+Add to the providers array in `config/app.php` (if not auto-discovered):
+
+```php
+'providers' => [
+    LanguageDetector\Infrastructure\Adapters\Laravel\LanguageDetectorServiceProvider::class,
+],
+```
+
+**2. Configure the Service Provider**
+
+You can customize parameters directly in the service provider or extend it:
+
+```php
+// In config/app.php or create a custom service provider
+'providers' => [
+    \App\Providers\CustomLanguageServiceProvider::class,
+],
+
+// app/Providers/CustomLanguageServiceProvider.php
+namespace App\Providers;
+
+use LanguageDetector\Infrastructure\Adapters\Laravel\LanguageDetectorServiceProvider;
+
+class CustomLanguageServiceProvider extends LanguageDetectorServiceProvider
+{
+    public string $paramName = 'lang';
+    public string $default = 'en';
+    public int $pathSegmentIndex = 0;  // URL path segment index
+}
+```
+
+**3. Register the Middleware**
+
+Add to `app/Http/Kernel.php`:
 
 ```php
 protected $middlewareGroups = [
@@ -122,22 +168,17 @@ protected $middlewareGroups = [
 ];
 ```
 
-Example configuration (config/language.php)
+The middleware will:
+- Automatically detect language on each request
+- Apply it globally using `App::setLocale()`
+- Check sources in priority order: POST → GET → Path → User → Session → Cookie → Header → Default
+
+**Manual usage in controller:**
 
 ```php
-return [
-    'paramName' => 'lang',
-    'default' => 'en',
-    'userAttribute' => 'language_code',
-    'tableName' => 'language',
-    'codeField' => 'code',
-    'enabledField' => 'is_enabled',
-];
-```
+use LanguageDetector\Application\LanguageDetector;
+use Illuminate\Support\Facades\App;
 
-Example usage in controller
-
-```php
 public function index(LanguageDetector $detector)
 {
     $lang = $detector->detect();
@@ -147,27 +188,165 @@ public function index(LanguageDetector $detector)
 }
 ```
 
-How it works
+**Event handling:**
 
- - Intercepts incoming requests.
- - Detects preferred language based on request or session.
- - Applies it globally using App::setLocale().
- - You can now listen to `LanguageChangedEvent` using Laravel event listeners.
- - **Note:** The language change event is currently dispatched **only for authenticated users**.
+Listen to `LanguageChangedEvent` using Laravel event listeners:
 
+```php
+// In EventServiceProvider
+use LanguageDetector\Domain\Events\LanguageChangedEvent;
+
+protected $listen = [
+    LanguageChangedEvent::class => [
+        \App\Listeners\LogLanguageChange::class,
+    ],
+];
+```
+
+**Note:** The language change event is currently dispatched **only for authenticated users**.
+
+---
+
+## 🚀 Usage in Symfony
+
+**1. Register the services**
+
+Create or update `config/services.yaml`:
+
+```yaml
+services:
+    # Register SymfonyContext
+    LanguageDetector\Infrastructure\Adapters\Symfony\SymfonyContext:
+        arguments:
+            $requestStack: '@request_stack'
+            $cache: '@cache.app'
+            $dispatcher: '@event_dispatcher'
+            $connection: '@doctrine.dbal.default_connection'
+            $config:
+                paramName: 'lang'
+                default: 'en'
+                pathSegmentIndex: 0
+
+    # Register LanguageDetector
+    LanguageDetector\Application\LanguageDetector:
+        arguments:
+            $context: '@LanguageDetector\Infrastructure\Adapters\Symfony\SymfonyContext'
+            $sourceKeys: null  # Use default order, or customize: ['get', 'header', 'default']
+            $config:
+                paramName: 'lang'
+                default: 'en'
+                pathSegmentIndex: 0
+
+    # Register RequestListener
+    LanguageDetector\Infrastructure\Adapters\Symfony\RequestListener:
+        arguments:
+            $detector: '@LanguageDetector\Application\LanguageDetector'
+        tags:
+            - { name: kernel.event_listener, event: kernel.request, priority: 10 }
+```
+
+**2. How it works**
+
+The `RequestListener` will:
+- Listen to `kernel.request` event
+- Automatically detect language on each request
+- Set the locale on the request and session
+- Update `$request->setLocale($lang)`
+
+**Manual usage in controller:**
+
+```php
+use LanguageDetector\Application\LanguageDetector;
+
+class HomeController extends AbstractController
+{
+    public function index(LanguageDetector $detector): Response
+    {
+        $lang = $detector->detect();
+        $this->get('request_stack')->getCurrentRequest()->setLocale($lang);
+
+        return $this->render('home/index.html.twig', [
+            'language' => $lang,
+        ]);
+    }
+}
+```
+
+**Event handling:**
+
+Listen to `LanguageChangedEvent`:
+
+```php
+use LanguageDetector\Domain\Events\LanguageChangedEvent;
+use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+
+class LanguageChangeSubscriber implements EventSubscriberInterface
+{
+    public static function getSubscribedEvents(): array
+    {
+        return [
+            LanguageChangedEvent::class => 'onLanguageChanged',
+        ];
+    }
+
+    public function onLanguageChanged(LanguageChangedEvent $event): void
+    {
+        // Log or handle language change
+        // $event->oldLanguage, $event->newLanguage, $event->user
+    }
+}
+```
+
+**Note:** The language change event is currently dispatched **only for authenticated users**.
+
+---
 
 ## ⚙️ Configuration Options
 
-| Option             | Description                                      | Default         |
-| ------------------ | ------------------------------------------------ | --------------- |
-| `paramName`        | Request parameter name for language              | `lang`          |
-| `default`          | Fallback language code                           | `en`            |
-| `userAttribute`    | User model attribute used to store language      | `language_code` |
-| `tableName`        | Database table name containing languages         | `language`      |
-| `codeField`        | Field name containing language code              | `code`          |
-| `enabledField`     | Field name for active/enabled flag               | `is_enabled`    |
-| `orderField`       | Field used for sorting languages                 | `order`         |
-| `pathSegmentIndex` | Segment Index of Url Path if get language by URL | 0               |
+| Option             | Description                                          | Default | Used in              |
+| ------------------ | ---------------------------------------------------- | ------- | -------------------- |
+| `paramName`        | Request parameter name for language (GET/POST/etc)   | `lang`  | All adapters         |
+| `default`          | Fallback language code                               | `en`    | All adapters         |
+| `pathSegmentIndex` | URL path segment index for language detection        | `0`     | All adapters         |
+| `sourceKeys`       | Array defining custom source detection order         | `null`  | All adapters         |
+| `cacheKey`         | Cache key for storing allowed languages              | `allowed_languages` | LanguageDetector |
+| `cacheTtl`         | Cache TTL in seconds                                 | `3600`  | LanguageDetector     |
+
+**Note:** Repository-related options (`tableName`, `codeField`, `enabledField`, `orderField`) are configured within each framework's repository implementation, not in the main configuration.
+
+---
+
+## 🔍 Available Language Sources
+
+You can customize which sources to use and their priority order via the `sourceKeys` configuration parameter. Available sources:
+
+| Source Key  | Description                                                    | Class                |
+| ----------- | -------------------------------------------------------------- | -------------------- |
+| `post`      | Reads language from POST parameter (e.g., `$_POST['lang']`)    | `PostSource`         |
+| `get`       | Reads language from GET parameter (e.g., `$_GET['lang']`)      | `GetSource`          |
+| `path`      | Extracts language from URL path segment (e.g., `/en/home`)     | `PathSource`         |
+| `user`      | Reads from authenticated user's profile attribute              | `UserProfileSource`  |
+| `session`   | Reads from session storage                                     | `SessionSource`      |
+| `cookie`    | Reads from cookie                                              | `CookieSource`       |
+| `header`    | Parses Accept-Language HTTP header                             | `HeaderSource`       |
+| `default`   | Returns the configured default language                        | `DefaultSource`      |
+
+**Default order:** `['post', 'get', 'path', 'user', 'session', 'cookie', 'header', 'default']`
+
+**Example custom order:**
+```php
+// Only use GET parameter and Accept-Language header
+$sourceKeys = ['get', 'header', 'default'];
+
+// Yii 2
+$context = new Yii2Context($config);
+$detector = new LanguageDetector($context, $sourceKeys, $config);
+
+// Laravel - extend ServiceProvider and pass to constructor
+// Symfony - configure in services.yaml
+```
+
+---
 
 ## 🗃️ Example Language Table
 
@@ -267,6 +446,7 @@ language-detector/
 │           │   └── SymfonyEventDispatcher.php          // implements EventDispatcherInterface
 │           └── Laravel/
 │               ├── LanguageDetectorServiceProvider.php
+│               ├── LaravelMiddleware.php
 │               ├── LaravelContext.php
 │               ├── LaravelRequestAdapter.php           // implements RequestInterface
 │               ├── LaravelResponseAdapter.php          // implements ResponseInterface
@@ -281,32 +461,49 @@ phpunit.xml.dist
 LICENSE
 ```
 
-### 🧩 Application Layer
+### 🧩 DDD Architecture Layers
 
-The `Application\LanguageDetector` class coordinates all domain services and acts as the high-level entry point for detecting language.  
-It does not depend on framework-specific code and uses interfaces from the Domain layer.
+**Domain Layer** (`src/Domain/`):
+- **Contracts** — interfaces defining core abstractions (RequestInterface, UserInterface, FrameworkContextInterface, etc.)
+- **Events** — domain events (LanguageChangedEvent)
+- **Sources** — language detection sources (PostSource, GetSource, PathSource, UserProfileSource, etc.)
 
-## 🧰 Example test
+**Application Layer** (`src/Application/`):
+- **LanguageDetector** — main service orchestrating language detection
+- **SourceFactory** — factory for creating source instances
 
-A minimal test file tests/LanguageDetectorTest.php:
+**Infrastructure Layer** (`src/Infrastructure/Adapters/`):
+- Framework-specific implementations (Yii2, Laravel, Symfony)
+- Each adapter implements `FrameworkContextInterface` providing access to framework services
+- Adapters are isolated from business logic and can be easily swapped
 
-```php
-<?php
+## 🧰 Example Test
 
-declare(strict_types=1);
+Running the included test file:
 
-use PHPUnit\Framework\TestCase;
-use LanguageDetector\Application\LanguageDetector;
-
-final class LanguageDetectorTest extends TestCase
-{
-    public function testDefaultLanguage(): void
-    {
-        $detector = new LanguageDetector(['default' => 'en']);
-        $this->assertSame('en', $detector->detect());
-    }
-}
+```bash
+php tests/TestLanguageDetector.php
 ```
+
+Sample output:
+```
+=== Language Detector Tests ===
+
+Test 1 - Path (/en/test): ✓ PASS
+Test 2 - GET parameter (lang=uk): ✓ PASS
+Test 3 - POST parameter (lang=fr): ✓ PASS
+Test 4 - Cookie (lang=de): ✓ PASS
+Test 5 - Session (lang=uk): ✓ PASS
+Test 6 - User profile (language_code=fr): ✓ PASS
+Test 7 - Accept-Language header (de-DE,de;q=0.9,en;q=0.8): ✓ PASS
+Test 8 - Default fallback: ✓ PASS
+Test 9 - Invalid language (lang=invalid): ✓ PASS
+Test 10 - Cache stores enabled languages: ✓ PASS
+
+=== Tests Complete ===
+```
+
+The test file demonstrates how to create mock implementations of all required interfaces and test the detector in isolation.
 
 
 ## 📄 License

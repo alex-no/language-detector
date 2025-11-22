@@ -31,6 +31,7 @@ use Yii;
  *         'paramName' => 'lang',
  *         'default' => 'en',
  *         'pathSegmentIndex' => 0,
+ *         // 'sourceKeys' => ['get', 'header', 'default'], // Optional: custom source order
  *     ],
  * ],
  */
@@ -39,11 +40,13 @@ class Bootstrap implements BootstrapInterface
     /**
      * @var string $paramName GET/POST/Cookie/Session/UserProfile parameter name to read language from
      * @var string $default Default language code
-     * @var int $pathSegmentIndex Index of the path segment to read language from (
+     * @var int $pathSegmentIndex Index of the path segment to read language from
+     * @var array|null $sourceKeys Custom order of language detection sources, or null for default order
      */
     public string $paramName = 'lang';
     public string $default = 'en';
     public int $pathSegmentIndex = 0;
+    public ?array $sourceKeys = null;
 
     /**
      * @inheritDoc
@@ -55,12 +58,11 @@ class Bootstrap implements BootstrapInterface
                 'paramName' => $this->paramName,
                 'default' => $this->default,
                 'pathSegmentIndex' => $this->pathSegmentIndex,
-                // 'sourceKeys' => ['get', 'header'], // только GET + Header
             ];
 
             $context = new Yii2Context($config);
 
-            $detector = new LanguageDetector($context, $config['sourceKeys'] ?? null, $config);
+            $detector = new LanguageDetector($context, $this->sourceKeys, $config);
 
 
             // Apply detected language
