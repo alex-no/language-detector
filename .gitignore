@@ -28,3 +28,4 @@ node_modules/
 package-lock.json
 yarn.lock
 /release_tag.bat
+/src/install.cmd

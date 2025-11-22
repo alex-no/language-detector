@@ -13,14 +13,6 @@ namespace LanguageDetector\Infrastructure\Adapters\Laravel;
  */
 use Illuminate\Support\ServiceProvider;
 use LanguageDetector\Application\LanguageDetector;
-use LanguageDetector\Domain\Sources\PostSource;
-use LanguageDetector\Domain\Sources\GetSource;
-use LanguageDetector\Domain\Sources\PathSource;
-use LanguageDetector\Domain\Sources\UserProfileSource;
-use LanguageDetector\Domain\Sources\SessionSource;
-use LanguageDetector\Domain\Sources\CookieSource;
-use LanguageDetector\Domain\Sources\HeaderSource;
-use LanguageDetector\Domain\Sources\DefaultSource;
 
 class LanguageDetectorServiceProvider extends ServiceProvider
 {
@@ -30,40 +22,17 @@ class LanguageDetectorServiceProvider extends ServiceProvider
 
     public function register(): void
     {
-        // Bind adapters and detector into the container
+        // Bind detector into the container
         $this->app->singleton('languageDetector', function ($app) {
-            $requestAdapter = new LaravelRequestAdapter($app['request']);
-            $responseAdapter = new LaravelResponseAdapter($app['Illuminate\Contracts\Routing\ResponseFactory'] ?? $app['response']);
-            $userAdapter = new LaravelUserAdapter($app['auth']->user() ?? null);
-            $repo = new LaravelLanguageRepository($app['db']);
-            $cache = new LaravelCacheAdapter($app['cache']->store());
-            $dispatcher = new LaravelEventDispatcher($app['events']);
-
-            $sources = [
-                new PostSource($this->paramName),
-                new GetSource($this->paramName),
-                new PathSource($this->pathSegmentIndex),
-                new UserProfileSource($this->paramName),
-                new SessionSource($this->paramName),
-                new CookieSource($this->paramName),
-                new HeaderSource('Accept-Language'),
-                new DefaultSource($this->default),
+            $config = [
+                'paramName' => $this->paramName,
+                'default' => $this->default,
+                'pathSegmentIndex' => $this->pathSegmentIndex,
             ];
 
-            return new LanguageDetector(
-                $requestAdapter,
-                $responseAdapter,
-                $userAdapter,
-                $repo,
-                $cache,
-                $dispatcher,
-                [
-                    'paramName' => $this->paramName,
-                    'default' => $this->default,
-                    'pathSegmentIndex' => $this->pathSegmentIndex,
-                    'sources' => $sources,
-                ]
-            );
+            $context = new LaravelContext($config);
+
+            return new LanguageDetector($context, null, $config);
         });
     }
 

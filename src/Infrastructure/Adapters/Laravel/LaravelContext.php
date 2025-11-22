@@ -58,8 +58,7 @@ final class LaravelContext implements FrameworkContextInterface
      */
     public function getUser(): ?UserInterface
     {
-        $user = Auth::user();
-        return $user !== null ? new LaravelUserAdapter($user) : null;
+        return new LaravelUserAdapter(Auth::user());
     }
 
     /**

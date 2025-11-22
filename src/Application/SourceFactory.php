@@ -1,4 +1,6 @@
 <?php
+declare(strict_types=1);
+
 namespace LanguageDetector\Application;
 
 use LanguageDetector\Domain\Contracts\SourceInterface;
