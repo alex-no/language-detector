@@ -11,12 +11,16 @@ with adapters for **Yii 2** and **Laravel**.
 ---
 
 ## ✨ Features
-- Detects language from multiple sources:
-  - `POST` / `GET` parameters
-  - 'Path' - URL path request
-  - Authenticated user profile
-  - Session / Cookies
-  - `Accept-Language` header
+- Detects language from multiple sources (default priority):
+  1. "POST"
+  2. "GET"
+  3. "URL Path"
+  4. "Authenticated User Profile"
+  5. "Session"
+  6. "Cookie"
+  7. "Accept-Language header"
+  8. "Default language"
+Order can be customized via configuration.
 - Caches allowed languages from the database
 - Can persist language to session, cookie, and user profile
 - Works in both web and API contexts
@@ -44,7 +48,7 @@ composer require alex-no/language-detector
 
 ## 🔔 Language change event
 
-When the detector changes the stored language for a user (for example when a new `lang` parameter is provided or a higher-priority source selects another language), `LanguageDetector` will update the user's profile attribute and — if an event dispatcher is provided — dispatch a `LanguageDetector\Core\Events\LanguageChangedEvent`.
+When the detector changes the stored language for a user (for example when a new `lang` parameter is provided or a higher-priority source selects another language), `LanguageDetector` will update the user's profile attribute and — if an event dispatcher is provided — dispatch a `LanguageDetector\Domain\Events\LanguageChangedEvent`.
 
 The event object exposes three public properties:
 
@@ -113,7 +117,7 @@ Add to app/Http/Kernel.php:
 protected $middlewareGroups = [
     'web' => [
         // ...
-        \LanguageDetector\Adapters\Laravel\LaravelMiddleware::class,
+        \LanguageDetector\Infrastructure\Adapters\Laravel\LaravelMiddleware::class,
     ],
 ];
 ```
@@ -219,10 +223,12 @@ composer test
 language-detector/
 │   src/
 │   ├── Application/
-│   │   └── LanguageDetector.php
+│   │   ├── LanguageDetector.php
+│   │   └── SourceFactory.php
 │   ├── Domain/
 │   │   ├── Contracts/
-│   │   │   ├── RequestInterface.php            // namespace LanguageDetector\Domain\Contracts
+│   │   │   ├── FrameworkContextInterface.php   // namespace LanguageDetector\Domain\Contracts
+│   │   │   ├── RequestInterface.php         
 │   │   │   ├── ResponseInterface.php
 │   │   │   ├── UserInterface.php
 │   │   │   ├── SourceInterface.php
@@ -243,6 +249,7 @@ language-detector/
 │       └── Adapters/
 │           ├── Yii2/
 │           │   ├── Bootstrap.php
+│           │   ├── Yii2Context.php
 │           │   ├── YiiRequestAdapter.php               // implements RequestInterface
 │           │   ├── YiiResponseAdapter.php              // implements ResponseInterface
 │           │   ├── YiiUserAdapter.php                  // implements UserInterface
@@ -251,6 +258,7 @@ language-detector/
 │           │   └── YiiEventDispatcher.php              // implements EventDispatcherInterface
 │           ├── Symfony/
 │           │   ├── RequestListener.php
+│           │   ├── SymfonyContext.php
 │           │   ├── SymfonyRequestAdapter.php           // implements RequestInterface
 │           │   ├── SymfonyResponseAdapter.php          // implements ResponseInterface
 │           │   ├── SymfonyUserAdapter.php              // implements UserInterface
@@ -259,6 +267,7 @@ language-detector/
 │           │   └── SymfonyEventDispatcher.php          // implements EventDispatcherInterface
 │           └── Laravel/
 │               ├── LanguageDetectorServiceProvider.php
+│               ├── LaravelContext.php
 │               ├── LaravelRequestAdapter.php           // implements RequestInterface
 │               ├── LaravelResponseAdapter.php          // implements ResponseInterface
 │               ├── LaravelUserAdapter.php              // implements UserInterface
