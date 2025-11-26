@@ -6,7 +6,7 @@
 [![Downloads](https://img.shields.io/packagist/dt/alex-no/language-detector.svg)](https://packagist.org/packages/alex-no/language-detector)
 
 A framework-agnostic language detection library for PHP 8.0+
-with adapters for **Yii 2**, **Laravel**, and **Symfony**.
+with adapters for **Yii 2**, **Yii 3**, **Laravel**, and **Symfony**.
 
 ---
 
@@ -25,7 +25,7 @@ with adapters for **Yii 2**, **Laravel**, and **Symfony**.
 - **Language persistence** — automatically saves detected language to session, cookie, and user profile (DB)
 - **Separate configuration** — independent `paramName` (for GET/POST/Cookie/Session) and `userAttribute` (for DB field name)
 - **API mode support** — works in both web and API contexts (API mode skips session/cookie)
-- **Framework-agnostic** — clean DDD architecture with adapters for Yii 2, Laravel, and Symfony
+- **Framework-agnostic** — clean DDD architecture with adapters for Yii 2, Yii 3, Laravel, and Symfony
 - **Event system** — dispatches `LanguageChangedEvent` when user's language changes
 - **Type-safe** — full PHP 8.0+ strict typing throughout
 
@@ -129,6 +129,139 @@ Yii::$app->on('language.changed', function($event) {
 ```
 
 **Note:** The language change event is currently dispatched **only for authenticated users**.
+
+---
+
+## 🚀 Usage in Yii 3
+
+**1. Register services in DI container**
+
+Add to your DI configuration (typically in `config/web/di.php` or similar):
+
+```php
+use LanguageDetector\Infrastructure\Adapters\Yii3\Yii3Context;
+use LanguageDetector\Application\LanguageDetector;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Message\ResponseInterface;
+use Psr\EventDispatcher\EventDispatcherInterface;
+use Yiisoft\Auth\IdentityInterface;
+use Yiisoft\Cache\CacheInterface;
+use Yiisoft\Db\Connection\ConnectionInterface;
+
+return [
+    // Register Yii3Context
+    Yii3Context::class => static function (
+        ServerRequestInterface $request,
+        ResponseInterface $response,
+        ?IdentityInterface $identity,
+        CacheInterface $cache,
+        EventDispatcherInterface $eventDispatcher,
+        ConnectionInterface $db
+    ) {
+        $config = [
+            'paramName' => 'lang',              // GET/POST/Cookie/Session parameter name
+            'userAttribute' => 'language_code', // User DB field name for storing language
+            'default' => 'en',                  // Default language code
+            'pathSegmentIndex' => 0,            // URL path segment index (0 = first segment)
+        ];
+
+        return new Yii3Context(
+            $config,
+            $request,
+            $response,
+            $identity,
+            $cache,
+            $eventDispatcher,
+            $db
+        );
+    },
+
+    // Register LanguageDetector
+    LanguageDetector::class => static function (Yii3Context $context) {
+        $config = [
+            'paramName' => 'lang',
+            'userAttribute' => 'language_code',
+            'default' => 'en',
+            'pathSegmentIndex' => 0,
+        ];
+
+        // Optional: customize source order
+        // $sourceKeys = ['get', 'header', 'default'];
+        $sourceKeys = null; // Use default order
+
+        return new LanguageDetector($context, $sourceKeys, $config);
+    },
+];
+```
+
+**2. Register the Middleware**
+
+Add the middleware to your middleware stack in `config/web/application.php`:
+
+```php
+use LanguageDetector\Infrastructure\Adapters\Yii3\LanguageMiddleware;
+
+return [
+    // ...
+    'middlewares' => [
+        // ... other middlewares
+        LanguageMiddleware::class,
+        // ... other middlewares
+    ],
+];
+```
+
+The middleware will:
+- Automatically detect language on each request
+- Check sources in priority order: POST → GET → Path → User → Session → Cookie → Header → Default
+- Store detected language as request attribute `language`
+- Persist language to session, cookie, and user profile
+
+**Manual usage in controller:**
+
+```php
+use LanguageDetector\Application\LanguageDetector;
+
+class HomeController
+{
+    public function index(LanguageDetector $detector): ResponseInterface
+    {
+        $lang = $detector->detect();
+
+        // Use the detected language
+        // ...
+
+        return $this->render('home/index', ['lang' => $lang]);
+    }
+}
+```
+
+**Event handling:**
+
+Listen to `LanguageChangedEvent` using PSR-14 event listeners:
+
+```php
+use LanguageDetector\Domain\Events\LanguageChangedEvent;
+use Psr\EventDispatcher\ListenerProviderInterface;
+
+// In your event listener provider configuration
+return [
+    ListenerProviderInterface::class => static function () {
+        $provider = new SimpleEventDispatcher();
+
+        $provider->listen(LanguageChangedEvent::class, function (LanguageChangedEvent $event) {
+            // Log or handle language change
+            // $event->oldLanguage, $event->newLanguage, $event->user
+        });
+
+        return $provider;
+    },
+];
+```
+
+**Note:** The language change event is currently dispatched **only for authenticated users**.
+
+---
 
 ## 🚀 Usage in Laravel
 
@@ -448,6 +581,15 @@ language-detector/
 │           │   ├── YiiCacheAdapter.php                 // implements CacheInterface
 │           │   ├── YiiLanguageRepository.php           // implements LanguageRepositoryInterface
 │           │   └── YiiEventDispatcher.php              // implements EventDispatcherInterface
+│           ├── Yii3/
+│           │   ├── LanguageMiddleware.php
+│           │   ├── Yii3Context.php
+│           │   ├── Yii3RequestAdapter.php              // implements RequestInterface
+│           │   ├── Yii3ResponseAdapter.php             // implements ResponseInterface
+│           │   ├── Yii3UserAdapter.php                 // implements UserInterface
+│           │   ├── Yii3CacheAdapter.php                // implements CacheInterface
+│           │   ├── Yii3LanguageRepository.php          // implements LanguageRepositoryInterface
+│           │   └── Yii3EventDispatcher.php             // implements EventDispatcherInterface
 │           ├── Symfony/
 │           │   ├── RequestListener.php
 │           │   ├── SymfonyContext.php
