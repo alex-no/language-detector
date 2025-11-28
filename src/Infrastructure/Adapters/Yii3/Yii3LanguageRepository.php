@@ -15,21 +15,19 @@ namespace LanguageDetector\Infrastructure\Adapters\Yii3;
  * @copyright 2025 Oleksandr Nosov
  */
 use LanguageDetector\Domain\Contracts\LanguageRepositoryInterface;
-use Yiisoft\Db\Connection\ConnectionInterface;
-use Yiisoft\Db\Query\Query;
 
 class Yii3LanguageRepository implements LanguageRepositoryInterface
 {
     /**
      * Yii3LanguageRepository constructor.
-     * @param ConnectionInterface $db
+     * @param \PDO $pdo
      * @param string $table
      * @param string $codeField
      * @param string $enabledField
      * @param string $orderField
      */
     public function __construct(
-        private ConnectionInterface $db,
+        private \PDO $pdo,
         private string $table = 'language',
         private string $codeField = 'code',
         private string $enabledField = 'is_enabled',
@@ -42,13 +40,16 @@ class Yii3LanguageRepository implements LanguageRepositoryInterface
     public function getEnabledLanguageCodes(): array
     {
         try {
-            $query = (new Query($this->db))
-                ->select([$this->codeField])
-                ->from($this->table)
-                ->where([$this->enabledField => 1])
-                ->orderBy([$this->orderField => SORT_ASC]);
+            $sql = sprintf(
+                'SELECT `%s` FROM `%s` WHERE `%s` = 1 ORDER BY `%s` ASC',
+                $this->codeField,
+                $this->table,
+                $this->enabledField,
+                $this->orderField
+            );
 
-            $rows = $query->all();
+            $stmt = $this->pdo->query($sql);
+            $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
             $codes = [];
             foreach ($rows as $r) {

@@ -127,7 +127,8 @@ class LanguageDetector
             }
         }
 
-        return $this->default;
+        // Always call finalize even for default language to save cookie/session
+        return $this->finalize($this->default, $isApi);
     }
 
     /**

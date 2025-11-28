@@ -24,7 +24,7 @@ class Yii3ResponseAdapter implements ResponseInterface
     /**
      * Yii3ResponseAdapter constructor.
      * @param PsrResponseInterface $response
-     * @param CookieCollection|null $cookies
+     * @param CookieCollection|null $cookies Mutable cookie collection from context
      */
     public function __construct(
         private PsrResponseInterface $response,
@@ -40,7 +40,7 @@ class Yii3ResponseAdapter implements ResponseInterface
             if ($this->cookies !== null) {
                 $cookie = (new Cookie($name, (string)$value))
                     ->withExpires(new \DateTimeImmutable('@' . $expire));
-                $this->cookies = $this->cookies->with($cookie);
+                $this->cookies->add($cookie);
             }
         } catch (\Throwable) {
             // ignore
