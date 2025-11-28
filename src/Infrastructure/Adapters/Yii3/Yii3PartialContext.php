@@ -9,11 +9,11 @@ use LanguageDetector\Domain\Contracts\ResponseInterface;
 use LanguageDetector\Domain\Contracts\UserInterface;
 use LanguageDetector\Domain\Contracts\EventDispatcherInterface;
 use LanguageDetector\Domain\Contracts\LanguageRepositoryInterface;
+use LanguageDetector\Infrastructure\Repositories\PdoLanguageRepository;
 use Psr\SimpleCache\CacheInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface as PsrResponseInterface;
 use Yiisoft\Cache\CacheInterface as YiiCacheInterface;
-use Yiisoft\Cookies\Cookie;
 use Yiisoft\Cookies\CookieCollection;
 
 /**
@@ -38,6 +38,7 @@ final class Yii3PartialContext implements FrameworkContextInterface
     private ?ServerRequestInterface $request = null;
     private ?PsrResponseInterface $response = null;
     private ?CookieCollection $cookies = null;
+    private mixed $identity = null;
 
     public function __construct(
         private array $config,
@@ -49,10 +50,16 @@ final class Yii3PartialContext implements FrameworkContextInterface
 
     /**
      * Set request (called when request becomes available)
+     * Also extracts identity from request attributes if available
      */
     public function setRequest(ServerRequestInterface $request): void
     {
         $this->request = $request;
+
+        // Try to extract identity from request attributes (standard Yii3 approach)
+        $this->identity = $request->getAttribute('identity')
+            ?? $request->getAttribute('user')
+            ?? null;
     }
 
     /**
@@ -92,8 +99,8 @@ final class Yii3PartialContext implements FrameworkContextInterface
      */
     public function getUser(): ?UserInterface
     {
-        // Guest user - we don't save language to user profile in Yii3
-        return new Yii3UserAdapter(null);
+        // Return user adapter with identity extracted from request attributes
+        return new Yii3UserAdapter($this->identity);
     }
 
     /**
@@ -111,9 +118,10 @@ final class Yii3PartialContext implements FrameworkContextInterface
     {
         // Dummy event dispatcher - we don't need events for now
         return new class implements EventDispatcherInterface {
-            public function dispatch(object $event): void
+            public function dispatch(object $event): object
             {
-                // No-op
+                // No-op - just return the event unchanged
+                return $event;
             }
         };
     }
@@ -123,7 +131,7 @@ final class Yii3PartialContext implements FrameworkContextInterface
      */
     public function getLanguageRepository(): LanguageRepositoryInterface
     {
-        return new Yii3LanguageRepository(
+        return new PdoLanguageRepository(
             $this->pdo,
             $this->config['table'] ?? 'language',
             $this->config['codeField'] ?? 'code',

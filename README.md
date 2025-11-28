@@ -134,9 +134,88 @@ Yii::$app->on('language.changed', function($event) {
 
 ## 🚀 Usage in Yii 3
 
-**1. Register services in DI container**
+Yii3 adapter supports two usage approaches:
 
-Add to your DI configuration (typically in `config/web/di.php` or similar):
+### Approach 1: Middleware (Recommended)
+
+**1. Register the Middleware in DI**
+
+Add to your DI configuration (typically in `config/web/di.php`):
+
+```php
+use LanguageDetector\Infrastructure\Adapters\Yii3\LanguageMiddleware;
+use Yiisoft\Cache\CacheInterface;
+
+return [
+    LanguageMiddleware::class => static function (\PDO $pdo, CacheInterface $cache) {
+        return new LanguageMiddleware(
+            $pdo,
+            $cache,
+            [
+                'paramName' => 'lang',              // GET/POST/Cookie/Session parameter name
+                'userAttribute' => 'language_code', // User DB field name for storing language
+                'default' => 'en',                  // Default language code
+                'pathSegmentIndex' => 0,            // URL path segment index (0 = first segment)
+                'table' => 'language',              // Database table name
+                'codeField' => 'code',              // Language code field name
+                'enabledField' => 'is_enabled',     // Enabled status field name
+                'orderField' => 'order',            // Sort order field name
+            ]
+        );
+    },
+];
+```
+
+**2. Register Middleware in application stack**
+
+Add to `config/web/application.php` (IMPORTANT: place AFTER authentication middleware):
+
+```php
+return [
+    'middlewares' => [
+        // ... other middlewares
+        \Yiisoft\Auth\Middleware\Authentication::class, // Authentication MUST run first
+        \LanguageDetector\Infrastructure\Adapters\Yii3\LanguageMiddleware::class,
+        // ... other middlewares
+    ],
+];
+```
+
+**How it works:**
+- Automatically detects language on each request
+- Checks sources in priority order: POST → GET → Path → User → Session → Cookie → Header → Default
+- Stores detected language as request attribute `language`
+- Persists language to session, cookie, and authenticated user profile
+- **Requires authentication middleware to run BEFORE** to enable user language persistence
+- Identity must be stored in request attributes as `'identity'` or `'user'`
+
+**Usage in controllers:**
+
+```php
+use Psr\Http\Message\ServerRequestInterface;
+
+class HomeController
+{
+    public function index(ServerRequestInterface $request): ResponseInterface
+    {
+        // Get detected language from request attribute
+        $lang = $request->getAttribute('language', 'en');
+
+        // Use the detected language
+        // ...
+
+        return $this->render('home/index', ['lang' => $lang]);
+    }
+}
+```
+
+---
+
+### Approach 2: Manual Usage with Full Context
+
+For advanced scenarios where you need full control over all components:
+
+**1. Register services in DI**
 
 ```php
 use LanguageDetector\Infrastructure\Adapters\Yii3\Yii3Context;
@@ -149,7 +228,6 @@ use Yiisoft\Cache\CacheInterface;
 use Yiisoft\Db\Connection\ConnectionInterface;
 
 return [
-    // Register Yii3Context
     Yii3Context::class => static function (
         ServerRequestInterface $request,
         ResponseInterface $response,
@@ -158,15 +236,13 @@ return [
         EventDispatcherInterface $eventDispatcher,
         ConnectionInterface $db
     ) {
-        $config = [
-            'paramName' => 'lang',              // GET/POST/Cookie/Session parameter name
-            'userAttribute' => 'language_code', // User DB field name for storing language
-            'default' => 'en',                  // Default language code
-            'pathSegmentIndex' => 0,            // URL path segment index (0 = first segment)
-        ];
-
         return new Yii3Context(
-            $config,
+            [
+                'paramName' => 'lang',
+                'userAttribute' => 'language_code',
+                'default' => 'en',
+                'pathSegmentIndex' => 0,
+            ],
             $request,
             $response,
             $identity,
@@ -176,48 +252,18 @@ return [
         );
     },
 
-    // Register LanguageDetector
     LanguageDetector::class => static function (Yii3Context $context) {
-        $config = [
+        return new LanguageDetector($context, null, [
             'paramName' => 'lang',
             'userAttribute' => 'language_code',
             'default' => 'en',
             'pathSegmentIndex' => 0,
-        ];
-
-        // Optional: customize source order
-        // $sourceKeys = ['get', 'header', 'default'];
-        $sourceKeys = null; // Use default order
-
-        return new LanguageDetector($context, $sourceKeys, $config);
+        ]);
     },
 ];
 ```
 
-**2. Register the Middleware**
-
-Add the middleware to your middleware stack in `config/web/application.php`:
-
-```php
-use LanguageDetector\Infrastructure\Adapters\Yii3\LanguageMiddleware;
-
-return [
-    // ...
-    'middlewares' => [
-        // ... other middlewares
-        LanguageMiddleware::class,
-        // ... other middlewares
-    ],
-];
-```
-
-The middleware will:
-- Automatically detect language on each request
-- Check sources in priority order: POST → GET → Path → User → Session → Cookie → Header → Default
-- Store detected language as request attribute `language`
-- Persist language to session, cookie, and user profile
-
-**Manual usage in controller:**
+**2. Use in controllers:**
 
 ```php
 use LanguageDetector\Application\LanguageDetector;
@@ -227,16 +273,33 @@ class HomeController
     public function index(LanguageDetector $detector): ResponseInterface
     {
         $lang = $detector->detect();
-
-        // Use the detected language
-        // ...
-
         return $this->render('home/index', ['lang' => $lang]);
     }
 }
 ```
 
-**Event handling:**
+---
+
+### Configuration Parameters
+
+All configuration parameters for Yii3 adapter:
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `paramName` | string | `'lang'` | Parameter name for GET/POST/Cookie/Session |
+| `userAttribute` | string | `'language_code'` | User database field name for storing language |
+| `default` | string | `'en'` | Default language code |
+| `pathSegmentIndex` | int | `0` | URL path segment index for language detection (0 = first segment) |
+| `table` | string | `'language'` | Database table name for enabled languages |
+| `codeField` | string | `'code'` | Language code field name in database |
+| `enabledField` | string | `'is_enabled'` | Enabled status field name (should contain 1/0) |
+| `orderField` | string | `'order'` | Sort order field name |
+| `cacheKey` | string | `'allowed_languages'` | Cache key for storing enabled languages |
+| `cacheTtl` | int | `3600` | Cache TTL in seconds |
+
+---
+
+### Event Handling
 
 Listen to `LanguageChangedEvent` using PSR-14 event listeners:
 
@@ -244,14 +307,13 @@ Listen to `LanguageChangedEvent` using PSR-14 event listeners:
 use LanguageDetector\Domain\Events\LanguageChangedEvent;
 use Psr\EventDispatcher\ListenerProviderInterface;
 
-// In your event listener provider configuration
 return [
     ListenerProviderInterface::class => static function () {
         $provider = new SimpleEventDispatcher();
 
         $provider->listen(LanguageChangedEvent::class, function (LanguageChangedEvent $event) {
             // Log or handle language change
-            // $event->oldLanguage, $event->newLanguage, $event->user
+            // Available properties: $event->oldLanguage, $event->newLanguage, $event->user
         });
 
         return $provider;
@@ -259,7 +321,7 @@ return [
 ];
 ```
 
-**Note:** The language change event is currently dispatched **only for authenticated users**.
+**Note:** The language change event is dispatched **only for authenticated users**.
 
 ---
 

@@ -18,6 +18,10 @@ use Yiisoft\Cache\CacheInterface;
  * Yii3 DI limitations where Request and Response are not available
  * during middleware construction.
  *
+ * IMPORTANT: For user language persistence to work, ensure that:
+ * 1. Authentication middleware runs BEFORE this middleware
+ * 2. Identity is stored in request attributes as 'identity' or 'user'
+ *
  * This file is part of LanguageDetector package.
  *
  * For the full copyright and license information, please view the LICENSE

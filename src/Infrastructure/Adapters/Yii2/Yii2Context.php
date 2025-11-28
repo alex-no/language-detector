@@ -22,6 +22,7 @@ use LanguageDetector\Domain\Contracts\ResponseInterface;
 use LanguageDetector\Domain\Contracts\UserInterface;
 use LanguageDetector\Domain\Contracts\EventDispatcherInterface;
 use LanguageDetector\Domain\Contracts\LanguageRepositoryInterface;
+use LanguageDetector\Infrastructure\Repositories\PdoLanguageRepository;
 use Psr\SimpleCache\CacheInterface;
 use Yii;
 
@@ -81,6 +82,15 @@ final class Yii2Context implements FrameworkContextInterface
      */
     public function getLanguageRepository(): LanguageRepositoryInterface
     {
-        return new YiiLanguageRepository(Yii::$app->db);
+        // Get PDO instance from Yii2 DB connection
+        $pdo = Yii::$app->db->getMasterPdo();
+
+        return new PdoLanguageRepository(
+            $pdo,
+            $this->config['table'] ?? 'language',
+            $this->config['codeField'] ?? 'code',
+            $this->config['enabledField'] ?? 'is_enabled',
+            $this->config['orderField'] ?? 'order'
+        );
     }
 }

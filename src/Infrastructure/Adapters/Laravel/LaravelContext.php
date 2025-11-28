@@ -21,6 +21,7 @@ use LanguageDetector\Domain\Contracts\ResponseInterface;
 use LanguageDetector\Domain\Contracts\UserInterface;
 use LanguageDetector\Domain\Contracts\EventDispatcherInterface;
 use LanguageDetector\Domain\Contracts\LanguageRepositoryInterface;
+use LanguageDetector\Infrastructure\Repositories\PdoLanguageRepository;
 use Psr\SimpleCache\CacheInterface;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -82,6 +83,15 @@ final class LaravelContext implements FrameworkContextInterface
      */
     public function getLanguageRepository(): LanguageRepositoryInterface
     {
-        return new LaravelLanguageRepository(DB::connection());
+        // Get PDO instance from Laravel DB connection
+        $pdo = DB::connection()->getPdo();
+
+        return new PdoLanguageRepository(
+            $pdo,
+            $this->config['table'] ?? 'language',
+            $this->config['codeField'] ?? 'code',
+            $this->config['enabledField'] ?? 'is_enabled',
+            $this->config['orderField'] ?? 'order'
+        );
     }
 }

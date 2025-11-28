@@ -21,6 +21,7 @@ use LanguageDetector\Domain\Contracts\ResponseInterface;
 use LanguageDetector\Domain\Contracts\UserInterface;
 use LanguageDetector\Domain\Contracts\EventDispatcherInterface;
 use LanguageDetector\Domain\Contracts\LanguageRepositoryInterface;
+use LanguageDetector\Infrastructure\Repositories\PdoLanguageRepository;
 use Psr\SimpleCache\CacheInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface as SymfonyDispatcher;
@@ -94,6 +95,15 @@ final class SymfonyContext implements FrameworkContextInterface
      */
     public function getLanguageRepository(): LanguageRepositoryInterface
     {
-        return new SymfonyLanguageRepository($this->connection);
+        // Get PDO instance from Doctrine DBAL connection
+        $pdo = $this->connection->getNativeConnection();
+
+        return new PdoLanguageRepository(
+            $pdo,
+            $this->config['table'] ?? 'language',
+            $this->config['codeField'] ?? 'code',
+            $this->config['enabledField'] ?? 'is_enabled',
+            $this->config['orderField'] ?? 'order'
+        );
     }
 }
