@@ -64,6 +64,7 @@ final class Yii3PartialContext implements FrameworkContextInterface
 
     /**
      * Set response (called when response becomes available)
+     * Optional: not needed for middleware usage as ResponseAdapter works with cookies only
      */
     public function setResponse(PsrResponseInterface $response): void
     {
@@ -86,11 +87,8 @@ final class Yii3PartialContext implements FrameworkContextInterface
      */
     public function getResponse(): ResponseInterface
     {
-        if ($this->response === null) {
-            throw new \RuntimeException('Response not available yet. Call setResponse() first.');
-        }
-
-        // Return response adapter with mutable cookie collection
+        // Response is optional for middleware usage - ResponseAdapter only needs cookies
+        // The actual PSR-7 response can be null, cookies are stored in CookieCollection
         return new Yii3ResponseAdapter($this->response, $this->cookies);
     }
 

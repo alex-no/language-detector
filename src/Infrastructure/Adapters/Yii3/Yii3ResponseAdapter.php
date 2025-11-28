@@ -23,11 +23,11 @@ class Yii3ResponseAdapter implements ResponseInterface
 {
     /**
      * Yii3ResponseAdapter constructor.
-     * @param PsrResponseInterface $response
+     * @param PsrResponseInterface|null $response PSR-7 Response (optional, not used in middleware)
      * @param CookieCollection|null $cookies Mutable cookie collection from context
      */
     public function __construct(
-        private PsrResponseInterface $response,
+        private ?PsrResponseInterface $response = null,
         private ?CookieCollection $cookies = null,
     ) {}
 

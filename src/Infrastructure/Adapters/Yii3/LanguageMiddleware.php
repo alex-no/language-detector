@@ -65,10 +65,8 @@ class LanguageMiddleware implements MiddlewareInterface
             // Set request in context (available now)
             $this->partialContext->setRequest($request);
 
-            // Create a temporary response for detection (needed for context)
-            // We'll use a dummy response since we only need it for the context interface
-            $dummyResponse = new \HttpSoft\Message\Response();
-            $this->partialContext->setResponse($dummyResponse);
+            // Note: Response is not needed for language detection
+            // ResponseAdapter works with CookieCollection only, Response is optional
 
             // Detect language BEFORE calling handler
             $detector = new LanguageDetector($this->partialContext, null, $this->config);
